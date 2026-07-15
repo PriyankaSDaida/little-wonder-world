@@ -1553,6 +1553,22 @@ button:disabled {
   border-radius: 10px;
   font-size: 9px;
 }
+.room-slot:not(.filled) small {
+  text-transform: capitalize;
+  opacity: 0.78;
+}
+.room-slot.floor-zone:not(.filled) {
+  border-color: #fff6c9;
+  background: #fff3b426;
+}
+.room-slot.wall-zone:not(.filled) {
+  border-color: #dff1ff;
+  background: #d9efff20;
+}
+.room-slot.window-zone:not(.filled) {
+  border-color: #e4d8ff;
+  background: #e9ddff20;
+}
 .room-slot.filled {
   border-color: transparent;
   background: transparent;
@@ -2539,4 +2555,281 @@ body {
     padding: 20px;
     align-items: flex-start;
   }
+}
+
+/* Full night palette — warm moonlight, deep teal surfaces, and AA-level contrast. */
+.game.night {
+  --ink: #f7f2e5;
+  --muted: #b9cbc5;
+  --line: #405966;
+  --shadow: 0 22px 55px #06131f66;
+  color-scheme: dark;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 14% 6%, #33516b 0, transparent 30%),
+    radial-gradient(circle at 88% 18%, #293f5d 0, transparent 25%),
+    linear-gradient(180deg, #182c3d, #102333 70%);
+}
+.night .game-header {
+  background: #142a3aec;
+  border-color: #456070;
+  box-shadow: 0 10px 35px #06131f66;
+}
+.night .game-brand,
+.night .player-chip b {
+  color: #fff8e8;
+}
+.night .game-brand span {
+  background: linear-gradient(145deg, #f7c961, #e69b4f);
+  box-shadow:
+    inset 0 -4px #c77d3b,
+    0 0 24px #f7c96133;
+}
+.night .game-header nav {
+  background: #243c4a;
+  border: 1px solid #3d5968;
+}
+.night .game-header nav button {
+  color: #c1d0cc;
+}
+.night .game-header nav button:hover {
+  color: white;
+  background: #ffffff12;
+}
+.night .game-header nav button.active {
+  color: #fff9e9;
+  background: #385462;
+  box-shadow:
+    inset 0 0 0 1px #5f7a87,
+    0 7px 18px #07152155;
+}
+.night .save-button,
+.night .parent-button {
+  color: #f7f2e5;
+  background: #294554;
+  border-color: #56707c;
+}
+.night .star-count {
+  color: #6f5010;
+  background: #ffe59a;
+  box-shadow: 0 0 20px #f7c96126;
+}
+.night .player-avatar {
+  background: #f4dfbd;
+  border-color: #fff7df;
+}
+.night .village-copy p,
+.night .activity-heading p,
+.night .side-panel-heading > p:last-child {
+  color: #bdcec8;
+}
+.night .progress-pill,
+.night .activity-heading,
+.night .village-side-panel {
+  background: #203a48e8;
+  border-color: #496472;
+  color: #f7f2e5;
+  box-shadow: 0 18px 40px #07162266;
+}
+.night .progress-pill span,
+.night .adventure-dock small {
+  color: #aee2b2;
+}
+.night .adventure-dock button {
+  color: #f6f1e5;
+  background: #294755;
+  border-color: #496674;
+  box-shadow: 0 8px 18px #07172244;
+}
+.night .adventure-dock button:hover {
+  background: #345766;
+  border-color: #78929c;
+}
+.night .adventure-dock span {
+  background: #183541;
+}
+.night .gentle-note {
+  color: #f6efd9;
+  background: #3b4937;
+  border-color: #697052;
+}
+.night .world-place,
+.night .world-place small,
+.night .tiny-object small {
+  color: #29483f;
+}
+.night .world-place {
+  background: #fff9e7e8;
+  border-color: #fff1c8;
+}
+.night .garden-place {
+  background: #edf8ddea;
+}
+.night .pet-place {
+  background: #fff0e3ea;
+}
+.night .story-controls,
+.night .story-book,
+.night .saved-gallery,
+.night .art-tools,
+.night .music-track,
+.night .aquarium,
+.night .discovery-card,
+.night .kindness-card,
+.night .kindness-history,
+.night .pin-card,
+.night .parent-grid > section,
+.night .reward-grid article,
+.night .adoption-card,
+.night .care-panel,
+.night .room-workspace {
+  color: #f7f2e5;
+  background: #213b48;
+  border-color: #496573;
+  box-shadow: 0 20px 48px #06152166;
+}
+.night .story-controls legend,
+.night .story-book h2,
+.night .saved-gallery h2,
+.night .art-tools h2,
+.night .aquarium h2,
+.night .kindness-card h1,
+.night .kindness-history h2,
+.night .reward-grid h2,
+.night .parent-grid h2,
+.night .adoption-card h1,
+.night .care-panel h2,
+.night .furniture-tray h2 {
+  color: #fff8e9;
+}
+.night .story-book > p:not(.kicker) {
+  color: #d4e1dc;
+}
+.night .story-controls fieldset button,
+.night .story-actions button,
+.night .sticker-tools button,
+.night .saved-gallery > div > button,
+.night .activity-actions button,
+.night .seed-picker button,
+.night .care-actions button {
+  color: #eaf2ee;
+  background: #2e4b58;
+  border-color: #56717d;
+}
+.night .story-controls fieldset button:hover,
+.night .story-actions button:hover,
+.night .activity-actions button:hover,
+.night .seed-picker button:hover {
+  background: #3a5b68;
+}
+.night .story-controls fieldset button.selected,
+.night .seed-picker button.selected {
+  color: #dff6dd;
+  background: #315c4a;
+  border-color: #78b783;
+  box-shadow: inset 0 0 0 1px #78b78355;
+}
+.night .saved-gallery h2 span {
+  color: #dfeae5;
+  background: #35515d;
+}
+.night .saved-gallery button small,
+.night .music-track span,
+.night .kindness-card small,
+.night .reward-grid p,
+.night .furniture-tray > p {
+  color: #b9cbc5;
+}
+.night .canvas-frame {
+  border-color: #35515e;
+  background: #35515e;
+}
+.night .color-tools button {
+  border-color: #d7e2dd;
+}
+.night .color-tools button.selected {
+  box-shadow: 0 0 0 4px #f7c961;
+}
+.night .space-map,
+.night .ocean-map,
+.night .garden-scene {
+  border-color: #365461;
+}
+.night .kindness-card blockquote {
+  color: #dff4dd;
+  background: #315548;
+}
+.night .mission-done {
+  color: #574414;
+  background: #ffe59a;
+}
+.night .reward-grid .locked {
+  opacity: 0.72;
+}
+.night .reward-grid .unlocked:not(:has(button)) {
+  color: #3d4c25;
+  background: #f7dfa0;
+  border-color: #ffe6a2;
+}
+.night .reward-grid .unlocked:not(:has(button)) h2,
+.night .reward-grid .unlocked:not(:has(button)) p {
+  color: #3d4c25;
+}
+.night .parent-grid label,
+.night .parent-summary p {
+  border-color: #496573;
+}
+.night .parent-grid select,
+.night .pin-card input {
+  color: #f5f0e4;
+  background: #172f3c;
+  border-color: #587381;
+}
+.night .furniture-tray {
+  color: #edf4f0;
+  background: #294653;
+  border-color: #486673;
+}
+.night .furniture-tray > div:first-child span {
+  color: #eaf2ee;
+  background: #193541;
+}
+.night .furniture-grid button {
+  color: #29483f;
+}
+.night .furniture-grid button small {
+  color: #29483f;
+  font-weight: 900;
+}
+.night .furniture-grid button.selected {
+  border-color: #f7c961;
+  box-shadow: 0 0 0 2px #f7c96155;
+}
+.night .room-message,
+.night .room-slot small,
+.night .pet-room > p,
+.night .garden-plot {
+  color: #29483f;
+}
+.night .room-slot:not(.filled) small {
+  color: #29483f;
+  background: #fff8e8;
+}
+.night .room-message {
+  background: #fff9e9ee;
+}
+.night .care-actions button {
+  box-shadow: inset 0 -5px #1d3946;
+}
+.night .pet-meter i {
+  background: #142e3b;
+}
+.night .screen-time-reminder {
+  color: #29483f;
+  background: #fff1bd;
+}
+.night button:focus-visible,
+.night input:focus-visible,
+.night select:focus-visible {
+  outline-color: #f7c961;
 }

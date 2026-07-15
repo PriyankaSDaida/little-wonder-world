@@ -71,53 +71,52 @@ const avatars: Array<{ id: Avatar; emoji: string; label: string }> = [
   { id: "cat", emoji: "🐱", label: "Curious cat" },
 ];
 
-const furnitureNames = [
-  "Cloud bed",
-  "Rainbow rug",
-  "Moon lamp",
-  "Book basket",
-  "Teddy chair",
-  "Star pillow",
-  "Tiny table",
-  "Flower vase",
-  "Toy chest",
-  "Bunny clock",
-  "Leaf cushion",
-  "Dream canopy",
-  "Music box",
-  "Wall rainbow",
-  "Cozy blanket",
-  "Window plant",
-  "Fox stool",
-  "Sun mirror",
-  "Story shelf",
-  "Paper lantern",
-  "Acorn basket",
-  "Cloud mobile",
-  "Berry cushion",
-  "Wooden train",
-  "Doll house",
-];
+const furnitureCatalog = [
+  { name: "Cloud bed", emoji: "🛏️", zone: "floor" },
+  { name: "Rainbow rug", emoji: "🌈", zone: "floor" },
+  { name: "Moon lamp", emoji: "🌙", zone: "window" },
+  { name: "Book basket", emoji: "📚", zone: "floor" },
+  { name: "Teddy chair", emoji: "🧸", zone: "floor" },
+  { name: "Star pillow", emoji: "⭐", zone: "floor" },
+  { name: "Tiny table", emoji: "🪑", zone: "floor" },
+  { name: "Flower vase", emoji: "💐", zone: "window" },
+  { name: "Toy chest", emoji: "🧰", zone: "floor" },
+  { name: "Bunny clock", emoji: "⏰", zone: "wall" },
+  { name: "Leaf cushion", emoji: "🍃", zone: "floor" },
+  { name: "Dream canopy", emoji: "🎪", zone: "wall" },
+  { name: "Music box", emoji: "🎵", zone: "window" },
+  { name: "Wall rainbow", emoji: "🌈", zone: "wall" },
+  { name: "Cozy blanket", emoji: "🧶", zone: "floor" },
+  { name: "Window plant", emoji: "🪴", zone: "window" },
+  { name: "Fox stool", emoji: "🦊", zone: "floor" },
+  { name: "Sun mirror", emoji: "🪞", zone: "wall" },
+  { name: "Story shelf", emoji: "📖", zone: "wall" },
+  { name: "Paper lantern", emoji: "🏮", zone: "wall" },
+  { name: "Acorn basket", emoji: "🧺", zone: "floor" },
+  { name: "Cloud mobile", emoji: "☁️", zone: "wall" },
+  { name: "Berry cushion", emoji: "🫐", zone: "floor" },
+  { name: "Wooden train", emoji: "🚂", zone: "floor" },
+  { name: "Doll house", emoji: "🏠", zone: "floor" },
+] as const;
 
 const furniture = Array.from({ length: 50 }, (_, index) => ({
   id: `item-${index + 1}`,
-  name: furnitureNames[index % furnitureNames.length],
-  emoji: ["🛏️", "🧸", "🪴", "📚", "🪑", "🛋️", "🪞", "🧺", "🪁", "🕯️"][
-    index % 10
-  ],
+  name: `${furnitureCatalog[index % furnitureCatalog.length].name}${index >= furnitureCatalog.length ? " · Twilight" : ""}`,
+  emoji: furnitureCatalog[index % furnitureCatalog.length].emoji,
+  zone: furnitureCatalog[index % furnitureCatalog.length].zone,
   color: ["peach", "mint", "sky", "lilac", "sunny"][index % 5],
 }));
 
 const roomSlots = [
-  "window-left",
-  "window-right",
-  "floor-left",
-  "floor-center",
-  "floor-right",
-  "wall-left",
-  "wall-center",
-  "wall-right",
-];
+  { id: "window-left", zone: "window", label: "left window table" },
+  { id: "window-right", zone: "window", label: "right window table" },
+  { id: "floor-left", zone: "floor", label: "left floor" },
+  { id: "floor-center", zone: "floor", label: "center floor" },
+  { id: "floor-right", zone: "floor", label: "right floor" },
+  { id: "wall-left", zone: "wall", label: "left wall" },
+  { id: "wall-center", zone: "wall", label: "center wall" },
+  { id: "wall-right", zone: "wall", label: "right wall" },
+] as const;
 
 const plantInfo: Record<PlantKind, { emoji: string[]; name: string }> = {
   sunflower: { emoji: ["🌰", "🌱", "🌿", "🌻"], name: "Sunflower" },
@@ -251,6 +250,17 @@ export default function Home() {
         try {
           const parsed = JSON.parse(saved) as Partial<WorldState>;
           const restored = { ...defaultWorld, ...parsed };
+          restored.room = Object.fromEntries(
+            Object.entries(restored.room).filter(([slotId, itemId]) => {
+              const slot = roomSlots.find(
+                (candidate) => candidate.id === slotId,
+              );
+              const item = furniture.find(
+                (candidate) => candidate.id === itemId,
+              );
+              return slot && item && slot.zone === item.zone;
+            }),
+          );
           setWorld(restored);
           setNameDraft(restored.childName);
           setAvatarDraft(restored.avatar);
@@ -375,6 +385,20 @@ export default function Home() {
   }
 
   function placeFurniture(slot: string, itemId = selectedFurniture) {
+    const item = furniture.find((candidate) => candidate.id === itemId);
+    const target = roomSlots.find((candidate) => candidate.id === slot);
+    if (!item || !target || item.zone !== target.zone) {
+      const friendlyZone =
+        item?.zone === "floor"
+          ? "a floor space"
+          : item?.zone === "wall"
+            ? "a wall space"
+            : "a space beside the window";
+      setRoomMessage(
+        `${item?.name ?? "That item"} belongs in ${friendlyZone}.`,
+      );
+      return;
+    }
     if (world.room[slot] && world.room[slot] !== itemId) {
       setRoomMessage("That cozy spot is full. Try another glowing space!");
       return;
@@ -1100,19 +1124,19 @@ export default function Home() {
               </div>
               {roomSlots.map((slot) => {
                 const placed = furniture.find(
-                  (item) => item.id === world.room[slot],
+                  (item) => item.id === world.room[slot.id],
                 );
                 return (
                   <button
-                    key={slot}
-                    className={`room-slot ${slot} ${placed ? "filled" : ""}`}
+                    key={slot.id}
+                    className={`room-slot ${slot.id} ${slot.zone}-zone ${placed ? "filled" : ""}`}
                     onDragOver={(event) => event.preventDefault()}
-                    onDrop={(event) => dropFurniture(event, slot)}
-                    onClick={() => placeFurniture(slot)}
+                    onDrop={(event) => dropFurniture(event, slot.id)}
+                    onClick={() => placeFurniture(slot.id)}
                     aria-label={
                       placed
                         ? `${placed.name}, move selected item here`
-                        : `Place selected item in ${slot.replaceAll("-", " ")}`
+                        : `Place selected item on ${slot.label}`
                     }
                   >
                     {placed ? (
@@ -1121,7 +1145,10 @@ export default function Home() {
                         <small>{placed.name}</small>
                       </>
                     ) : (
-                      <span>＋</span>
+                      <>
+                        <span>＋</span>
+                        <small>{slot.zone}</small>
+                      </>
                     )}
                   </button>
                 );
