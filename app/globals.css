@@ -1573,6 +1573,28 @@ button:disabled {
   border-color: transparent;
   background: transparent;
 }
+.room-slot.filled:hover,
+.room-slot.filled:focus-visible {
+  background: #fff8ee88;
+  border-color: #ef8f78;
+}
+.remove-label {
+  display: block;
+  margin-top: 4px;
+  padding: 4px 8px;
+  border-radius: 10px;
+  color: #8a3f34;
+  background: #ffe2d9;
+  font: 900 9px var(--round);
+  font-style: normal;
+  opacity: 0.88;
+}
+.room-slot.filled:hover .remove-label,
+.room-slot.filled:focus-visible .remove-label {
+  color: white;
+  background: #c85d4d;
+  opacity: 1;
+}
 .window-left {
   left: 9%;
   top: 27%;
@@ -2814,6 +2836,11 @@ body {
 .night .room-slot:not(.filled) small {
   color: #29483f;
   background: #fff8e8;
+}
+.night .room-slot.filled:hover,
+.night .room-slot.filled:focus-visible {
+  background: #1f3c4888;
+  border-color: #f6aa91;
 }
 .night .room-message {
   background: #fff9e9ee;

@@ -421,6 +421,17 @@ export default function Home() {
     setRoomHistory((history) => history.slice(0, -1));
   }
 
+  function removeFurniture(slot: string) {
+    const item = furniture.find(
+      (candidate) => candidate.id === world.room[slot],
+    );
+    if (!item) return;
+    const next = { ...world.room };
+    delete next[slot];
+    rememberRoom(next);
+    setRoomMessage(`${item.name} is back in your toy box. You can undo this.`);
+  }
+
   function redoRoom() {
     const next = roomFuture[0];
     if (!next) return;
@@ -1132,10 +1143,14 @@ export default function Home() {
                     className={`room-slot ${slot.id} ${slot.zone}-zone ${placed ? "filled" : ""}`}
                     onDragOver={(event) => event.preventDefault()}
                     onDrop={(event) => dropFurniture(event, slot.id)}
-                    onClick={() => placeFurniture(slot.id)}
+                    onClick={() =>
+                      placed
+                        ? removeFurniture(slot.id)
+                        : placeFurniture(slot.id)
+                    }
                     aria-label={
                       placed
-                        ? `${placed.name}, move selected item here`
+                        ? `Remove ${placed.name} from ${slot.label}`
                         : `Place selected item on ${slot.label}`
                     }
                   >
@@ -1143,6 +1158,7 @@ export default function Home() {
                       <>
                         <span>{placed.emoji}</span>
                         <small>{placed.name}</small>
+                        <em className="remove-label">× Remove</em>
                       </>
                     ) : (
                       <>
