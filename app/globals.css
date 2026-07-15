@@ -1095,3 +1095,366 @@ footer {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Child-first interaction layer */
+.topbar {
+  height: 82px;
+}
+.brand b {
+  font-size: 20px;
+}
+.topbar nav button {
+  min-height: 44px;
+  padding: 11px 18px;
+  font-size: 12px;
+}
+.welcome,
+.village-shell,
+.family-strip,
+footer {
+  max-width: 1680px;
+}
+.welcome {
+  padding-top: 38px;
+}
+.welcome h1 {
+  font-size: 42px;
+}
+.welcome p {
+  font-size: 13px;
+}
+.village-shell {
+  height: 760px;
+  border-radius: 30px;
+}
+.village-guide {
+  position: absolute;
+  left: 28px;
+  top: 25px;
+  z-index: 18;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 18px 12px 12px;
+  border: 3px solid #fff;
+  border-radius: 24px;
+  background: #fffaf2ee;
+  box-shadow: 0 12px 30px #43513c33;
+}
+.village-guide > span {
+  width: 62px;
+  height: 62px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #f5d79f;
+  font-size: 36px;
+}
+.village-guide div {
+  display: grid;
+}
+.village-guide small {
+  color: #b37955;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+.village-guide b {
+  margin-top: 2px;
+  font: 700 19px var(--serif);
+}
+.village-guide p {
+  margin: 2px 0 0;
+  color: #78877f;
+  font-size: 10px;
+}
+.place {
+  min-width: 60px;
+  width: 60px;
+  height: 60px;
+  justify-content: center;
+  border: 4px solid #fff;
+  border-radius: 50%;
+  padding: 0;
+  animation: gentleBob 2.8s ease-in-out infinite alternate;
+}
+.place > i {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  font-size: 23px;
+}
+.place > span {
+  position: absolute;
+  top: 66px;
+  left: 50%;
+  min-width: 124px;
+  transform: translateX(-50%);
+  padding: 7px 10px;
+  border: 2px solid #fff;
+  border-radius: 12px;
+  background: #fffaf2f2;
+  text-align: center;
+}
+.place b {
+  font-size: 10px;
+}
+.place small {
+  font-size: 8px;
+}
+.today-card,
+.now-playing {
+  display: none;
+}
+.adventure-dock {
+  position: absolute;
+  left: 50%;
+  bottom: 22px;
+  z-index: 25;
+  width: min(1040px, calc(100% - 40px));
+  transform: translateX(-50%);
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  padding: 17px;
+  border: 4px solid #fff;
+  border-radius: 28px;
+  background: #fffaf2f2;
+  box-shadow: 0 18px 50px #40503b4f;
+  backdrop-filter: blur(15px);
+}
+.dock-title {
+  position: absolute;
+  left: 26px;
+  top: -30px;
+  padding: 8px 16px;
+  border-radius: 16px 16px 0 0;
+  color: #fff;
+  background: #5f7f70;
+  font: 700 12px var(--serif);
+}
+.adventure-dock button {
+  min-height: 108px;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  border: 0;
+  border-radius: 20px;
+  padding: 10px;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
+}
+.adventure-dock button:hover {
+  transform: translateY(-7px) rotate(-1deg);
+  box-shadow: 0 12px 20px #53634e30;
+}
+.adventure-dock button i {
+  font-style: normal;
+  font-size: 35px;
+}
+.adventure-dock button b {
+  margin-top: 5px;
+  font: 700 14px var(--serif);
+}
+.adventure-dock button small {
+  margin-top: 2px;
+  color: #6f7f77;
+  font-size: 9px;
+}
+.home-choice {
+  background: #ffe0d2;
+}
+.pet-choice {
+  background: #ffe8b8;
+}
+.garden-choice {
+  background: #dcebcf;
+}
+.story-choice {
+  background: #e4ddf3;
+}
+.art-choice {
+  background: #d5ebed;
+}
+.activity-layer {
+  background: #536557b8;
+}
+.gift-button {
+  background: #fff0c7 !important;
+  border-color: #efd18b !important;
+  animation: giftWiggle 2.6s ease-in-out infinite;
+}
+@keyframes giftWiggle {
+  0%,
+  75%,
+  100% {
+    transform: rotate(0);
+  }
+  82% {
+    transform: rotate(-8deg);
+  }
+  90% {
+    transform: rotate(8deg);
+  }
+}
+.activity-card {
+  width: min(680px, 100%);
+  position: relative;
+  padding: 34px;
+  border: 5px solid #fff;
+  border-radius: 34px;
+  background: #fffaf0;
+  box-shadow: 0 30px 90px #36443766;
+  text-align: center;
+}
+.activity-hero {
+  width: 112px;
+  height: 112px;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 10px;
+  border-radius: 35% 45% 38% 50%;
+  background: #ffe5b9;
+  font-size: 64px;
+  animation: gentleBob 1.8s ease-in-out infinite alternate;
+}
+.activity-card.garden .activity-hero {
+  background: #dcebcf;
+}
+.activity-card.studio .activity-hero {
+  background: #d5ebed;
+}
+.activity-card.pet .activity-hero {
+  background: #ffe0d2;
+}
+.activity-card > small {
+  color: #b37b58;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+}
+.activity-card h2 {
+  margin: 7px 0;
+  font: 700 32px var(--serif);
+}
+.activity-card > p {
+  max-width: 480px;
+  margin: 0 auto 22px;
+  color: #74827b;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.activity-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.activity-actions button {
+  min-height: 120px;
+  display: grid;
+  place-items: center;
+  border: 2px solid #e9ddc8;
+  border-radius: 20px;
+  background: #fff;
+  transition: 0.2s;
+}
+.activity-actions button:hover {
+  transform: scale(1.04);
+  border-color: #8cac97;
+  background: #f5f9f1;
+}
+.activity-actions i {
+  font-style: normal;
+  font-size: 38px;
+}
+.activity-actions b {
+  font: 700 13px var(--serif);
+}
+.maybe-later {
+  margin-top: 18px;
+  border: 0;
+  background: transparent;
+  color: #7d8b84;
+  font-size: 11px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+@keyframes gentleBob {
+  to {
+    transform: translate(-50%, calc(-50% - 7px));
+  }
+}
+.activity-hero {
+  animation-name: activityBob;
+}
+@keyframes activityBob {
+  to {
+    transform: translateY(-7px) rotate(2deg);
+  }
+}
+
+@media (max-width: 900px) {
+  .adventure-dock {
+    grid-template-columns: repeat(5, minmax(100px, 1fr));
+    overflow-x: auto;
+  }
+  .adventure-dock button {
+    min-width: 115px;
+  }
+  .village-guide {
+    left: 14px;
+    top: 14px;
+  }
+}
+@media (max-width: 620px) {
+  .welcome h1 {
+    font-size: 30px;
+  }
+  .village-shell {
+    height: 820px;
+  }
+  .village-guide {
+    right: 14px;
+  }
+  .village-guide > span {
+    width: 48px;
+    height: 48px;
+    font-size: 28px;
+  }
+  .village-guide b {
+    font-size: 15px;
+  }
+  .village-guide p {
+    display: none;
+  }
+  .adventure-dock {
+    bottom: 12px;
+    grid-template-columns: repeat(2, 1fr);
+    max-height: 330px;
+    overflow-y: auto;
+  }
+  .adventure-dock button {
+    min-height: 92px;
+  }
+  .adventure-dock button:last-child {
+    grid-column: 1 / 3;
+  }
+  .activity-card {
+    padding: 25px 18px;
+  }
+  .activity-card h2 {
+    font-size: 25px;
+  }
+  .activity-actions {
+    grid-template-columns: 1fr;
+  }
+  .activity-actions button {
+    min-height: 74px;
+    grid-template-columns: 55px 1fr;
+    text-align: left;
+  }
+  .place > span {
+    display: none;
+  }
+}

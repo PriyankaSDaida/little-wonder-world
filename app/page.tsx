@@ -54,9 +54,10 @@ export default function Home() {
   const [selected, setSelected] = useState("home");
   const [petHappy, setPetHappy] = useState(false);
   const [watered, setWatered] = useState(false);
-  const [surprise, setSurprise] = useState(true);
+  const [surprise, setSurprise] = useState(false);
   const [story, setStory] = useState(false);
   const [parentPanel, setParentPanel] = useState(false);
+  const [activity, setActivity] = useState<string | null>(null);
   const place = places.find((item) => item.id === selected) ?? places[0];
 
   useEffect(() => {
@@ -87,6 +88,7 @@ export default function Home() {
   function visit(id: string) {
     setSelected(id);
     if (id === "stories") setStory(true);
+    else setActivity(id);
   }
 
   return (
@@ -110,6 +112,13 @@ export default function Home() {
             <small>GOOD AFTERNOON</small>
             <b>Mila</b>
           </div>
+          <button
+            className="gift-button"
+            onClick={() => setSurprise(true)}
+            aria-label="Open today’s surprise"
+          >
+            🎁
+          </button>
           <button
             onClick={() => setParentPanel(true)}
             aria-label="Open grown-up settings"
@@ -161,6 +170,14 @@ export default function Home() {
       </section>
 
       <section className="village-shell" id="village">
+        <div className="village-guide">
+          <span>🐶</span>
+          <div>
+            <small>PIP SAYS</small>
+            <b>What should we explore?</b>
+            <p>Tap a big picture below. There’s no wrong choice!</p>
+          </div>
+        </div>
         <div className="sky">
           <span className="sun" />
           <span className="cloud c1">☁</span>
@@ -227,6 +244,35 @@ export default function Home() {
             </span>
           </button>
         ))}
+
+        <div className="adventure-dock" aria-label="Choose an activity">
+          <span className="dock-title">What sounds fun?</span>
+          <button className="home-choice" onClick={() => visit("home")}>
+            <i>🏡</i>
+            <b>My cozy home</b>
+            <small>Dress up & decorate</small>
+          </button>
+          <button className="pet-choice" onClick={() => setActivity("pet")}>
+            <i>🐶</i>
+            <b>Play with Pip</b>
+            <small>Cuddle, feed & care</small>
+          </button>
+          <button className="garden-choice" onClick={() => visit("garden")}>
+            <i>🌻</i>
+            <b>Grow my garden</b>
+            <small>Water something lovely</small>
+          </button>
+          <button className="story-choice" onClick={() => setStory(true)}>
+            <i>📚</i>
+            <b>Read a story</b>
+            <small>A new tale is waiting</small>
+          </button>
+          <button className="art-choice" onClick={() => visit("studio")}>
+            <i>🎨</i>
+            <b>Make some art</b>
+            <small>Colors, shapes & imagination</small>
+          </button>
+        </div>
 
         <aside className="today-card">
           <header>
@@ -396,6 +442,142 @@ export default function Home() {
             </p>
             <button className="primary" onClick={() => setStory(false)}>
               Read together <span>→</span>
+            </button>
+          </section>
+        </div>
+      )}
+
+      {activity && (
+        <div
+          className="modal-layer activity-layer"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="activity-title"
+        >
+          <section className={`activity-card ${activity}`}>
+            <button
+              className="close"
+              onClick={() => setActivity(null)}
+              aria-label="Close activity"
+            >
+              ×
+            </button>
+            <div className="activity-hero">
+              {activity === "home"
+                ? "🏡"
+                : activity === "garden"
+                  ? "🌻"
+                  : activity === "studio"
+                    ? "🎨"
+                    : "🐶"}
+            </div>
+            <small>YOUR LITTLE MOMENT</small>
+            <h2 id="activity-title">
+              {activity === "home"
+                ? "Make your home feel cozy"
+                : activity === "garden"
+                  ? "Help something grow"
+                  : activity === "studio"
+                    ? "What will you imagine?"
+                    : "Pip is happy to see you!"}
+            </h2>
+            <p>
+              {activity === "home"
+                ? "Choose one sweet thing for Mila’s room. You can change it whenever you like."
+                : activity === "garden"
+                  ? "The flowers don’t mind waiting. Give them a little water when you’re ready."
+                  : activity === "studio"
+                    ? "There are no mistakes here—only new ideas waiting to happen."
+                    : "Pip has nowhere else to be. Stay, play, or give him a gentle cuddle."}
+            </p>
+            <div className="activity-actions">
+              {activity === "home" && (
+                <>
+                  <button onClick={() => setActivity(null)}>
+                    <i>🧸</i>
+                    <b>Teddy corner</b>
+                  </button>
+                  <button onClick={() => setActivity(null)}>
+                    <i>⭐</i>
+                    <b>Star lights</b>
+                  </button>
+                  <button onClick={() => setActivity(null)}>
+                    <i>🪴</i>
+                    <b>Tiny plant</b>
+                  </button>
+                </>
+              )}
+              {activity === "garden" && (
+                <>
+                  <button
+                    onClick={() => {
+                      setWatered(true);
+                      setActivity(null);
+                    }}
+                  >
+                    <i>💧</i>
+                    <b>Water gently</b>
+                  </button>
+                  <button onClick={() => setActivity(null)}>
+                    <i>🌱</i>
+                    <b>Plant a seed</b>
+                  </button>
+                  <button onClick={() => setActivity(null)}>
+                    <i>🦋</i>
+                    <b>Watch butterflies</b>
+                  </button>
+                </>
+              )}
+              {activity === "studio" && (
+                <>
+                  <button onClick={() => setActivity(null)}>
+                    <i>🖌️</i>
+                    <b>Finger paint</b>
+                  </button>
+                  <button onClick={() => setActivity(null)}>
+                    <i>✂️</i>
+                    <b>Paper shapes</b>
+                  </button>
+                  <button onClick={() => setActivity(null)}>
+                    <i>🌈</i>
+                    <b>Mix colors</b>
+                  </button>
+                </>
+              )}
+              {activity === "pet" && (
+                <>
+                  <button
+                    onClick={() => {
+                      setPetHappy(true);
+                      setActivity(null);
+                    }}
+                  >
+                    <i>🤗</i>
+                    <b>Gentle cuddle</b>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setPetHappy(true);
+                      setActivity(null);
+                    }}
+                  >
+                    <i>🥕</i>
+                    <b>Give a snack</b>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setPetHappy(true);
+                      setActivity(null);
+                    }}
+                  >
+                    <i>⚽</i>
+                    <b>Roll the ball</b>
+                  </button>
+                </>
+              )}
+            </div>
+            <button className="maybe-later" onClick={() => setActivity(null)}>
+              Maybe later—that’s okay
             </button>
           </section>
         </div>
