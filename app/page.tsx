@@ -317,6 +317,10 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [screen]);
+
+  useEffect(() => {
     if (!world.started) return;
     const reminder = window.setTimeout(
       () => setScreenTimeReached(true),
@@ -879,136 +883,157 @@ export default function Home() {
 
       {screen === "village" && (
         <section className="village-screen" aria-labelledby="village-title">
-          <div className="village-copy">
-            <p className="kicker">YOUR MAGICAL HOME</p>
-            <h1 id="village-title">Where should we explore?</h1>
-            <p>Everything here is yours to touch, grow, and make special.</p>
+          <div className="village-hero">
+            <div className="village-copy">
+              <p className="kicker">YOUR MAGICAL HOME</p>
+              <h1 id="village-title">Where should we explore?</h1>
+              <p>Everything here is yours to touch, grow, and make special.</p>
+            </div>
+            <div
+              className="progress-pill"
+              aria-label={`${overallProgress} of 3 adventures started`}
+            >
+              <span>{overallProgress}/3</span>
+              <small>world places discovered</small>
+            </div>
           </div>
-          <div
-            className="progress-pill"
-            aria-label={`${overallProgress} of 3 adventures started`}
-          >
-            <span>{overallProgress}/3</span> adventures started
-          </div>
-          <div className="village-world" aria-label="Interactive home village">
-            <div className="sky-stars" aria-hidden="true">
-              ✦　·　✧　·　✦　·　✧
-            </div>
-            <i className="cloud moving-cloud cloud-a" />
-            <i className="cloud moving-cloud cloud-b" />
-            <span className="bird bird-a" aria-hidden="true">
-              ⌁⌁
-            </span>
-            <span className="bird bird-b" aria-hidden="true">
-              ⌁
-            </span>
-            <button
-              className={`village-sun ${activeObject === "sun" ? "object-pop" : ""}`}
-              aria-label="Touch the sun"
-              onClick={() => {
-                setIsNight((value) => !value);
-                setActiveObject("sun");
-              }}
+          <div className="village-layout">
+            <div
+              className="village-world"
+              aria-label="Interactive home village"
             >
-              {isNight ? "🌙" : "☀️"}
-            </button>
-            <div className="mountains" aria-hidden="true">
-              <i />
-              <i />
-              <i />
-            </div>
-            <div className="trees" aria-hidden="true">
-              <i>♣</i>
-              <i>♣</i>
-              <i>♣</i>
-              <i>♣</i>
-              <i>♣</i>
-            </div>
-
-            <button
-              className={`world-place house-place ${activeObject === "house" ? "object-pop" : ""}`}
-              onClick={() => {
-                setActiveObject("house");
-                setScreen("room");
-              }}
-            >
-              <span className="place-art">🏡</span>
-              <b>My Cozy Room</b>
-              <small>
-                {roomCount
-                  ? `${roomCount} things placed`
-                  : "Make it feel like you"}
-              </small>
-            </button>
-            <button
-              className={`world-place garden-place ${activeObject === "garden" ? "object-pop" : ""}`}
-              onClick={() => {
-                setActiveObject("garden");
-                setScreen("garden");
-              }}
-            >
-              <span className="place-art">🌻</span>
-              <b>Sunny Garden</b>
-              <small>
-                {gardenCount
-                  ? `${gardenCount} plants growing`
-                  : "Plant your first seed"}
-              </small>
-            </button>
-            <button
-              className={`world-place pet-place ${activeObject === "pet" ? "object-pop" : ""}`}
-              onClick={() => {
-                setActiveObject("pet");
-                setScreen("pet");
-              }}
-            >
-              <span className="place-art">
-                {world.pet ? petInfo[world.pet.kind].emoji : "🐾"}
+              <div className="sky-stars" aria-hidden="true">
+                ✦　·　✧　·　✦　·　✧
+              </div>
+              <i className="cloud moving-cloud cloud-a" />
+              <i className="cloud moving-cloud cloud-b" />
+              <span className="bird bird-a" aria-hidden="true">
+                ⌁⌁
               </span>
-              <b>{world.pet ? `${world.pet.name}’s Cottage` : "Pet Cottage"}</b>
-              <small>
-                {world.pet ? "Your friend is waiting" : "Meet a new friend"}
-              </small>
-            </button>
-            <button
-              className={`tiny-object pond ${activeObject === "pond" ? "object-pop" : ""}`}
-              onClick={() => setActiveObject("pond")}
-            >
-              <span>🦆</span>
-              <small>Quack!</small>
-            </button>
-            <button
-              className={`tiny-object mailbox ${activeObject === "mail" ? "object-pop" : ""}`}
-              onClick={() => setActiveObject("mail")}
-            >
-              <span>📬</span>
-              <small>A hello from Nani!</small>
-            </button>
-          </div>
-          <div className="adventure-dock" aria-label="More adventures">
-            {(
-              [
-                ["story", "📚", "Story Builder"],
-                ["draw", "🎨", "Drawing Studio"],
-                ["music", "🎵", "Music Garden"],
-                ["space", "🚀", "Space"],
-                ["ocean", "🐠", "Ocean"],
-                ["kindness", "💛", "Kindness"],
-                ["rewards", "🎁", "Rewards"],
-              ] as Array<[Screen, string, string]>
-            ).map(([id, icon, label]) => (
-              <button key={id} onClick={() => setScreen(id)}>
-                <span>{icon}</span>
-                <b>{label}</b>
+              <span className="bird bird-b" aria-hidden="true">
+                ⌁
+              </span>
+              <button
+                className={`village-sun ${activeObject === "sun" ? "object-pop" : ""}`}
+                aria-label="Touch the sun"
+                onClick={() => {
+                  setIsNight((value) => !value);
+                  setActiveObject("sun");
+                }}
+              >
+                {isNight ? "🌙" : "☀️"}
               </button>
-            ))}
-          </div>
-          <div className="gentle-note">
-            <span>💛</span>
-            <p>
-              <b>Your world waits for you.</b>No timers, no losing, and no need
-              to hurry.
-            </p>
+              <div className="mountains" aria-hidden="true">
+                <i />
+                <i />
+                <i />
+              </div>
+              <div className="trees" aria-hidden="true">
+                <i>♣</i>
+                <i>♣</i>
+                <i>♣</i>
+                <i>♣</i>
+                <i>♣</i>
+              </div>
+
+              <button
+                className={`world-place house-place ${activeObject === "house" ? "object-pop" : ""}`}
+                onClick={() => {
+                  setActiveObject("house");
+                  setScreen("room");
+                }}
+              >
+                <span className="place-art">🏡</span>
+                <b>My Cozy Room</b>
+                <small>
+                  {roomCount
+                    ? `${roomCount} things placed`
+                    : "Make it feel like you"}
+                </small>
+              </button>
+              <button
+                className={`world-place garden-place ${activeObject === "garden" ? "object-pop" : ""}`}
+                onClick={() => {
+                  setActiveObject("garden");
+                  setScreen("garden");
+                }}
+              >
+                <span className="place-art">🌻</span>
+                <b>Sunny Garden</b>
+                <small>
+                  {gardenCount
+                    ? `${gardenCount} plants growing`
+                    : "Plant your first seed"}
+                </small>
+              </button>
+              <button
+                className={`world-place pet-place ${activeObject === "pet" ? "object-pop" : ""}`}
+                onClick={() => {
+                  setActiveObject("pet");
+                  setScreen("pet");
+                }}
+              >
+                <span className="place-art">
+                  {world.pet ? petInfo[world.pet.kind].emoji : "🐾"}
+                </span>
+                <b>
+                  {world.pet ? `${world.pet.name}’s Cottage` : "Pet Cottage"}
+                </b>
+                <small>
+                  {world.pet ? "Your friend is waiting" : "Meet a new friend"}
+                </small>
+              </button>
+              <button
+                className={`tiny-object pond ${activeObject === "pond" ? "object-pop" : ""}`}
+                onClick={() => setActiveObject("pond")}
+              >
+                <span>🦆</span>
+                <small>Quack!</small>
+              </button>
+              <button
+                className={`tiny-object mailbox ${activeObject === "mail" ? "object-pop" : ""}`}
+                onClick={() => setActiveObject("mail")}
+              >
+                <span>📬</span>
+                <small>A hello from Nani!</small>
+              </button>
+            </div>
+            <aside
+              className="village-side-panel"
+              aria-label="Creative adventures"
+            >
+              <div className="side-panel-heading">
+                <p className="kicker">MORE TO DISCOVER</p>
+                <h2>Choose an adventure</h2>
+                <p>Make, imagine, explore, or do something kind.</p>
+              </div>
+              <div className="adventure-dock" aria-label="More adventures">
+                {(
+                  [
+                    ["story", "📚", "Story Builder"],
+                    ["draw", "🎨", "Drawing Studio"],
+                    ["music", "🎵", "Music Garden"],
+                    ["space", "🚀", "Space"],
+                    ["ocean", "🐠", "Ocean"],
+                    ["kindness", "💛", "Kindness"],
+                    ["rewards", "🎁", "Rewards"],
+                  ] as Array<[Screen, string, string]>
+                ).map(([id, icon, label]) => (
+                  <button key={id} onClick={() => setScreen(id)}>
+                    <span>{icon}</span>
+                    <b>{label}</b>
+                    <small>Open →</small>
+                  </button>
+                ))}
+              </div>
+              <div className="gentle-note">
+                <span>💛</span>
+                <p>
+                  <b>Your world waits for you.</b>No timers, no losing, and no
+                  need to hurry.
+                </p>
+              </div>
+            </aside>
           </div>
         </section>
       )}
