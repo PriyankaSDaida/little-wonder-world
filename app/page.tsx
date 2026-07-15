@@ -1,846 +1,783 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import type { DragEvent } from "react";
 
-const places = [
-  {
-    id: "home",
-    icon: "⌂",
-    name: "Mila’s House",
-    note: "Dress up & decorate",
-    x: 23,
-    y: 53,
-    tone: "peach",
-  },
-  {
-    id: "garden",
-    icon: "✿",
-    name: "Sunny Garden",
-    note: "3 flowers ready",
-    x: 50,
-    y: 62,
-    tone: "green",
-  },
-  {
-    id: "stories",
-    icon: "☾",
-    name: "Story Nook",
-    note: "A new tale awaits",
-    x: 73,
-    y: 44,
-    tone: "purple",
-  },
-  {
-    id: "studio",
-    icon: "✎",
-    name: "Cloudberry Studio",
-    note: "Make something",
-    x: 84,
-    y: 68,
-    tone: "blue",
-  },
-];
+type Screen = "village" | "room" | "garden" | "pet";
+type Avatar = "fox" | "bunny" | "bear" | "cat";
+type PetKind = "puppy" | "kitten" | "panda";
+type PlantKind = "sunflower" | "strawberry" | "tulip";
 
-const seasons = {
-  spring: { label: "Spring", icon: "🌷" },
-  summer: { label: "Summer", icon: "☀️" },
-  autumn: { label: "Autumn", icon: "🍂" },
-  winter: { label: "Winter", icon: "❄️" },
+type Plant = {
+  kind: PlantKind;
+  stage: number;
+  watered: boolean;
 };
 
+type Pet = {
+  kind: PetKind;
+  name: string;
+  hunger: number;
+  happiness: number;
+  energy: number;
+  cleanliness: number;
+};
+
+type WorldState = {
+  childName: string;
+  avatar: Avatar;
+  started: boolean;
+  stars: number;
+  room: Record<string, string>;
+  garden: Array<Plant | null>;
+  pet: Pet | null;
+};
+
+const STORAGE_KEY = "little-wonder-world-v2";
+const avatars: Array<{ id: Avatar; emoji: string; label: string }> = [
+  { id: "fox", emoji: "🦊", label: "Clever fox" },
+  { id: "bunny", emoji: "🐰", label: "Happy bunny" },
+  { id: "bear", emoji: "🐻", label: "Cozy bear" },
+  { id: "cat", emoji: "🐱", label: "Curious cat" },
+];
+
+const furnitureNames = [
+  "Cloud bed",
+  "Rainbow rug",
+  "Moon lamp",
+  "Book basket",
+  "Teddy chair",
+  "Star pillow",
+  "Tiny table",
+  "Flower vase",
+  "Toy chest",
+  "Bunny clock",
+  "Leaf cushion",
+  "Dream canopy",
+  "Music box",
+  "Wall rainbow",
+  "Cozy blanket",
+  "Window plant",
+  "Fox stool",
+  "Sun mirror",
+  "Story shelf",
+  "Paper lantern",
+  "Acorn basket",
+  "Cloud mobile",
+  "Berry cushion",
+  "Wooden train",
+  "Doll house",
+];
+
+const furniture = Array.from({ length: 50 }, (_, index) => ({
+  id: `item-${index + 1}`,
+  name: furnitureNames[index % furnitureNames.length],
+  emoji: ["🛏️", "🧸", "🪴", "📚", "🪑", "🛋️", "🪞", "🧺", "🪁", "🕯️"][
+    index % 10
+  ],
+  color: ["peach", "mint", "sky", "lilac", "sunny"][index % 5],
+}));
+
+const roomSlots = [
+  "window-left",
+  "window-right",
+  "floor-left",
+  "floor-center",
+  "floor-right",
+  "wall-left",
+  "wall-center",
+  "wall-right",
+];
+
+const plantInfo: Record<PlantKind, { emoji: string[]; name: string }> = {
+  sunflower: { emoji: ["🌰", "🌱", "🌿", "🌻"], name: "Sunflower" },
+  strawberry: { emoji: ["🌰", "🌱", "🌿", "🍓"], name: "Strawberry" },
+  tulip: { emoji: ["🌰", "🌱", "🌿", "🌷"], name: "Tulip" },
+};
+
+const petInfo: Record<PetKind, { emoji: string; label: string }> = {
+  puppy: { emoji: "🐶", label: "Puppy" },
+  kitten: { emoji: "🐱", label: "Kitten" },
+  panda: { emoji: "🐼", label: "Panda" },
+};
+
+const defaultWorld: WorldState = {
+  childName: "",
+  avatar: "fox",
+  started: false,
+  stars: 0,
+  room: {},
+  garden: [null, null, null, null],
+  pet: null,
+};
+
+function clamp(value: number) {
+  return Math.min(100, Math.max(0, value));
+}
+
 export default function Home() {
-  const [season, setSeason] = useState<keyof typeof seasons>("spring");
-  const [weather, setWeather] = useState<"sunny" | "rainy" | "night">("sunny");
-  const [selected, setSelected] = useState("home");
-  const [petHappy, setPetHappy] = useState(false);
-  const [watered, setWatered] = useState(false);
-  const [surprise, setSurprise] = useState(false);
-  const [story, setStory] = useState(false);
-  const [parentPanel, setParentPanel] = useState(false);
-  const [activity, setActivity] = useState<string | null>(null);
-  const [storyPage, setStoryPage] = useState(0);
-  const [gardenStage, setGardenStage] = useState(0);
-  const [petAction, setPetAction] = useState("Pip is waiting for you!");
-  const [roomItems, setRoomItems] = useState<string[]>([]);
-  const [paintColor, setPaintColor] = useState("#ef9276");
-  const [pixels, setPixels] = useState(() => Array(48).fill("#fffaf0"));
-  const [reduceMotion, setReduceMotion] = useState(false);
-  const [readAloud, setReadAloud] = useState(false);
-  const [highContrast, setHighContrast] = useState(false);
-  const [familyInvite, setFamilyInvite] = useState(false);
-  const place = places.find((item) => item.id === selected) ?? places[0];
+  const [world, setWorld] = useState<WorldState>(defaultWorld);
+  const [screen, setScreen] = useState<Screen>("village");
+  const [hydrated, setHydrated] = useState(false);
+  const [nameDraft, setNameDraft] = useState("");
+  const [avatarDraft, setAvatarDraft] = useState<Avatar>("fox");
+  const [isNight, setIsNight] = useState(false);
+  const [activeObject, setActiveObject] = useState("");
+  const [selectedFurniture, setSelectedFurniture] = useState(furniture[0].id);
+  const [roomHistory, setRoomHistory] = useState<Array<Record<string, string>>>(
+    [],
+  );
+  const [roomFuture, setRoomFuture] = useState<Array<Record<string, string>>>(
+    [],
+  );
+  const [roomMessage, setRoomMessage] = useState(
+    "Choose something, then tap a space.",
+  );
+  const [seed, setSeed] = useState<PlantKind>("sunflower");
+  const [petReaction, setPetReaction] = useState(
+    "Your new friend is ready to play!",
+  );
 
   useEffect(() => {
     const restore = window.setTimeout(() => {
-      const saved = window.localStorage.getItem("little-wonder-world");
-      if (!saved) return;
-      const data = JSON.parse(saved) as {
-        season?: keyof typeof seasons;
-        watered?: boolean;
-        petHappy?: boolean;
-        reduceMotion?: boolean;
-        readAloud?: boolean;
-        highContrast?: boolean;
-      };
-      if (data.season) setSeason(data.season);
-      setWatered(Boolean(data.watered));
-      setPetHappy(Boolean(data.petHappy));
-      setReduceMotion(Boolean(data.reduceMotion));
-      setReadAloud(Boolean(data.readAloud));
-      setHighContrast(Boolean(data.highContrast));
+      const saved = window.localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try {
+          const restored = {
+            ...defaultWorld,
+            ...(JSON.parse(saved) as WorldState),
+          };
+          setWorld(restored);
+          setNameDraft(restored.childName);
+          setAvatarDraft(restored.avatar);
+        } catch {
+          window.localStorage.removeItem(STORAGE_KEY);
+        }
+      }
+      setHydrated(true);
     }, 0);
-    if ("serviceWorker" in navigator)
+    if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("/sw.js").catch(() => undefined);
+    }
     return () => window.clearTimeout(restore);
   }, []);
 
   useEffect(() => {
-    window.localStorage.setItem(
-      "little-wonder-world",
-      JSON.stringify({
-        season,
-        watered,
-        petHappy,
-        reduceMotion,
-        readAloud,
-        highContrast,
-      }),
-    );
-  }, [season, watered, petHappy, reduceMotion, readAloud, highContrast]);
+    if (!hydrated) return;
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(world));
+  }, [world, hydrated]);
 
-  function savePreferences() {
-    if (readAloud && "speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
-      const message = new SpeechSynthesisUtterance(
-        "Read aloud is on. Welcome to Mila's gentle world.",
-      );
-      message.rate = 0.85;
-      window.speechSynthesis.speak(message);
+  useEffect(() => {
+    const timer = window.setInterval(
+      () => setIsNight((value) => !value),
+      45000,
+    );
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const childName = world.childName.trim() || "Explorer";
+  const avatarEmoji =
+    avatars.find((item) => item.id === world.avatar)?.emoji ?? "🦊";
+  const roomCount = Object.keys(world.room).length;
+  const gardenCount = world.garden.filter(Boolean).length;
+
+  const overallProgress = useMemo(() => {
+    const milestones = [roomCount > 0, gardenCount > 0, Boolean(world.pet)];
+    return milestones.filter(Boolean).length;
+  }, [roomCount, gardenCount, world.pet]);
+
+  function startAdventure() {
+    setWorld((current) => ({
+      ...current,
+      childName: nameDraft.trim(),
+      avatar: avatarDraft,
+      started: true,
+    }));
+  }
+
+  function rememberRoom(next: Record<string, string>) {
+    setRoomHistory((history) => [...history.slice(-19), world.room]);
+    setRoomFuture([]);
+    setWorld((current) => ({ ...current, room: next }));
+  }
+
+  function placeFurniture(slot: string, itemId = selectedFurniture) {
+    if (world.room[slot] && world.room[slot] !== itemId) {
+      setRoomMessage("That cozy spot is full. Try another glowing space!");
+      return;
     }
-    setParentPanel(false);
+    const previousSlot = Object.entries(world.room).find(
+      ([, id]) => id === itemId,
+    )?.[0];
+    const next = { ...world.room };
+    if (previousSlot) delete next[previousSlot];
+    next[slot] = itemId;
+    rememberRoom(next);
+    setRoomMessage("Perfect! Your room remembered that spot.");
   }
 
-  function visit(id: string) {
-    setSelected(id);
-    if (id === "stories") setStory(true);
-    else setActivity(id);
+  function undoRoom() {
+    const previous = roomHistory.at(-1);
+    if (!previous) return;
+    setRoomFuture((future) => [world.room, ...future]);
+    setWorld((current) => ({ ...current, room: previous }));
+    setRoomHistory((history) => history.slice(0, -1));
   }
 
-  function toggleRoomItem(item: string) {
-    setRoomItems((items) =>
-      items.includes(item)
-        ? items.filter((value) => value !== item)
-        : [...items, item],
+  function redoRoom() {
+    const next = roomFuture[0];
+    if (!next) return;
+    setRoomHistory((history) => [...history, world.room]);
+    setWorld((current) => ({ ...current, room: next }));
+    setRoomFuture((future) => future.slice(1));
+  }
+
+  function dropFurniture(event: DragEvent<HTMLButtonElement>, slot: string) {
+    event.preventDefault();
+    const itemId = event.dataTransfer.getData("text/plain");
+    if (itemId) placeFurniture(slot, itemId);
+  }
+
+  function plant(index: number) {
+    if (world.garden[index]) return;
+    const garden = [...world.garden];
+    garden[index] = { kind: seed, stage: 0, watered: false };
+    setWorld((current) => ({ ...current, garden }));
+  }
+
+  function waterPlant(index: number) {
+    const garden = [...world.garden];
+    const current = garden[index];
+    if (!current || current.stage >= 3) return;
+    garden[index] = {
+      ...current,
+      watered: true,
+      stage: Math.min(3, current.stage + 1),
+    };
+    setWorld((value) => ({ ...value, garden }));
+  }
+
+  function harvest(index: number) {
+    const garden = [...world.garden];
+    const current = garden[index];
+    if (!current || current.stage < 3) return;
+    garden[index] = null;
+    setWorld((value) => ({ ...value, garden, stars: value.stars + 2 }));
+  }
+
+  function playSound(frequency: number) {
+    try {
+      const AudioContextClass = window.AudioContext;
+      const context = new AudioContextClass();
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+      oscillator.frequency.value = frequency;
+      gain.gain.setValueAtTime(0.08, context.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 0.25);
+      oscillator.connect(gain).connect(context.destination);
+      oscillator.start();
+      oscillator.stop(context.currentTime + 0.25);
+    } catch {
+      // Sound is an enhancement; play remains available when audio is blocked.
+    }
+  }
+
+  function careForPet(action: "feed" | "play" | "sleep" | "bathe") {
+    if (!world.pet) return;
+    const pet = { ...world.pet };
+    if (action === "feed") {
+      pet.hunger = clamp(pet.hunger + 18);
+      setPetReaction("Yum! That was a delicious snack.");
+      playSound(520);
+    }
+    if (action === "play") {
+      pet.happiness = clamp(pet.happiness + 20);
+      pet.energy = clamp(pet.energy - 8);
+      setPetReaction("Wheee! Your friend loves playing with you.");
+      playSound(660);
+    }
+    if (action === "sleep") {
+      pet.energy = clamp(pet.energy + 25);
+      setPetReaction("Shhh… a tiny, cozy nap.");
+      playSound(330);
+    }
+    if (action === "bathe") {
+      pet.cleanliness = clamp(pet.cleanliness + 22);
+      setPetReaction("Splish splash! All clean and fluffy.");
+      playSound(440);
+    }
+    setWorld((current) => ({ ...current, pet }));
+  }
+
+  if (!hydrated) {
+    return (
+      <main className="loading-world" aria-label="Loading your world">
+        ✦
+      </main>
     );
   }
 
-  function paint(index: number) {
-    setPixels((current) =>
-      current.map((color, pixel) => (pixel === index ? paintColor : color)),
+  if (!world.started) {
+    return (
+      <main className="onboarding">
+        <div className="welcome-sky" aria-hidden="true">
+          <i className="cloud cloud-one" />
+          <i className="cloud cloud-two" />
+          <span className="welcome-sun">☀</span>
+          <div className="welcome-hills" />
+          <div className="welcome-home">🏡</div>
+        </div>
+        <section className="welcome-card" aria-labelledby="welcome-title">
+          <span className="brand-star">✦</span>
+          <p className="kicker">A LITTLE WORLD OF YOUR OWN</p>
+          <h1 id="welcome-title">Little Wonder World</h1>
+          <p className="welcome-copy">
+            A gentle place to grow flowers, decorate a cozy room, and care for a
+            new best friend.
+          </p>
+          <div className="avatar-picker" aria-label="Choose your explorer">
+            {avatars.map((avatar) => (
+              <button
+                key={avatar.id}
+                className={avatarDraft === avatar.id ? "chosen" : ""}
+                onClick={() => setAvatarDraft(avatar.id)}
+                aria-pressed={avatarDraft === avatar.id}
+              >
+                <span>{avatar.emoji}</span>
+                {avatar.label}
+              </button>
+            ))}
+          </div>
+          <label className="name-field">
+            <span>
+              What should we call you? <em>Optional</em>
+            </span>
+            <input
+              value={nameDraft}
+              onChange={(event) =>
+                setNameDraft(event.target.value.slice(0, 18))
+              }
+              placeholder="Your name or nickname"
+              autoComplete="off"
+            />
+          </label>
+          <button className="start-button" onClick={startAdventure}>
+            Start Adventure <span>→</span>
+          </button>
+          <small>No account · No ads · Your world stays on this device</small>
+        </section>
+      </main>
     );
   }
 
   return (
-    <main
-      className={`world ${season} ${weather}${reduceMotion ? " reduce-motion" : ""}${highContrast ? " high-contrast" : ""}`}
-    >
-      <header className="topbar">
-        <a href="#village" className="brand">
+    <main className={`game ${isNight ? "night" : "day"}`}>
+      <header className="game-header">
+        <button className="game-brand" onClick={() => setScreen("village")}>
           <span>✦</span>
-          <span>
-            <b>Little Wonder World</b>
-            <small>made for gentle days</small>
-          </span>
-        </a>
-        <nav aria-label="Main navigation">
-          <button
-            className="active"
-            onClick={() => {
-              setActivity(null);
-              setStory(false);
-              document.getElementById("village")?.scrollIntoView();
-            }}
-          >
-            My Village
-          </button>
-          <button onClick={() => setStory(true)}>Storybook</button>
-          <button
-            onClick={() => {
-              setSelected("studio");
-              setActivity("studio");
-            }}
-          >
-            Create
-          </button>
+          <b>Little Wonder World</b>
+        </button>
+        <nav aria-label="World navigation">
+          {(
+            [
+              ["village", "🏡", "Village"],
+              ["room", "🛏️", "My Room"],
+              ["garden", "🌻", "Garden"],
+              ["pet", "🐾", "My Pet"],
+            ] as Array<[Screen, string, string]>
+          ).map(([id, icon, label]) => (
+            <button
+              key={id}
+              className={screen === id ? "active" : ""}
+              onClick={() => setScreen(id)}
+            >
+              <span>{icon}</span>
+              {label}
+            </button>
+          ))}
         </nav>
-        <div className="family">
-          <div className="avatar mila">M</div>
-          <div>
-            <small>GOOD AFTERNOON</small>
-            <b>Mila</b>
-          </div>
-          <button
-            className="gift-button"
-            onClick={() => setSurprise(true)}
-            aria-label="Open today’s surprise"
-          >
-            🎁
-          </button>
-          <button
-            onClick={() => setParentPanel(true)}
-            aria-label="Open grown-up settings"
-          >
-            ⚙
-          </button>
+        <div className="player-chip">
+          <span className="star-count">⭐ {world.stars}</span>
+          <span className="player-avatar">{avatarEmoji}</span>
+          <span>
+            <small>HELLO</small>
+            <b>{childName}</b>
+          </span>
         </div>
       </header>
 
-      <section className="welcome">
-        <div>
-          <span className="eyebrow">TUESDAY · A GENTLE SPRING DAY</span>
-          <h1>
-            Welcome home, Mila <em>♥</em>
-          </h1>
-          <p>
-            Your little world has been waiting for you. What would you like to
-            do today?
-          </p>
-        </div>
-        <div className="calm-controls">
-          <label>
-            <span>WORLD WEATHER</span>
-            <select
-              value={weather}
-              onChange={(e) => setWeather(e.target.value as typeof weather)}
-            >
-              <option value="sunny">Sunny afternoon</option>
-              <option value="rainy">Gentle rain</option>
-              <option value="night">Starry evening</option>
-            </select>
-          </label>
-          <label>
-            <span>SEASON</span>
-            <select
-              value={season}
-              onChange={(e) =>
-                setSeason(e.target.value as keyof typeof seasons)
-              }
-            >
-              {Object.entries(seasons).map(([value, item]) => (
-                <option key={value} value={value}>
-                  {item.icon} {item.label}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-      </section>
-
-      <section className="village-shell" id="village">
-        <div className="village-guide">
-          <span>🐶</span>
-          <div>
-            <small>PIP SAYS</small>
-            <b>What should we explore?</b>
-            <p>Tap a big picture below. There’s no wrong choice!</p>
+      {screen === "village" && (
+        <section className="village-screen" aria-labelledby="village-title">
+          <div className="village-copy">
+            <p className="kicker">YOUR MAGICAL HOME</p>
+            <h1 id="village-title">Where should we explore?</h1>
+            <p>Everything here is yours to touch, grow, and make special.</p>
           </div>
-        </div>
-        <div className="sky">
-          <span className="sun" />
-          <span className="cloud c1">☁</span>
-          <span className="cloud c2">☁</span>
-          {weather === "rainy" && (
-            <div className="raindrops">· · · · · · · · · · · ·</div>
-          )}
-          {weather === "night" && (
-            <div className="stars">✦ · ✧ · ✦ · ✧ · ✦</div>
-          )}
-        </div>
-        <div className="hills far" />
-        <div className="hills near" />
-        <div className="river" />
-        <div className="path" />
-        <div className="tree t1">♣</div>
-        <div className="tree t2">♣</div>
-        <div className="tree t3">♣</div>
-        <div className="tree t4">♣</div>
-        <div className="house-scene">
-          <div className="chimney" />
-          <div className="roof" />
-          <div className="house">
-            <span className="window">✦</span>
-            <span className="door">•</span>
-          </div>
-          <div className="fence">╫ ╫ ╫ ╫</div>
-        </div>
-        <div className="garden-scene">
-          <span>{watered ? "🌷 🌻 🌸 🌼" : "🌱 🌷 🌱 🌼"}</span>
-          <i>◡</i>
-        </div>
-        <div className="nook-scene">
-          <div className="trunk">▥</div>
-          <span>♣</span>
-          <i>☾</i>
-        </div>
-        <div className="studio-scene">
-          <div className="awning">▰</div>
-          <div>✎</div>
-          <span>
-            Cloudberry
-            <br />
-            Studio
-          </span>
-        </div>
-        <div className={`pet ${petHappy ? "happy" : ""}`}>
-          <span>🐶</span>
-          <i>{petHappy ? "♥" : ""}</i>
-        </div>
-        <div className="butterflies">⌁　⌁</div>
-
-        {places.map((item) => (
-          <button
-            key={item.id}
-            className={`place ${item.tone} ${selected === item.id ? "selected" : ""}`}
-            style={{ left: `${item.x}%`, top: `${item.y}%` }}
-            onClick={() => visit(item.id)}
+          <div
+            className="progress-pill"
+            aria-label={`${overallProgress} of 3 adventures started`}
           >
-            <i>{item.icon}</i>
-            <span>
-              <b>{item.name}</b>
-              <small>{item.note}</small>
-            </span>
-          </button>
-        ))}
-
-        <div className="adventure-dock" aria-label="Choose an activity">
-          <span className="dock-title">What sounds fun?</span>
-          <button className="home-choice" onClick={() => visit("home")}>
-            <i>🏡</i>
-            <b>My cozy home</b>
-            <small>Dress up & decorate</small>
-          </button>
-          <button className="pet-choice" onClick={() => setActivity("pet")}>
-            <i>🐶</i>
-            <b>Play with Pip</b>
-            <small>Cuddle, feed & care</small>
-          </button>
-          <button className="garden-choice" onClick={() => visit("garden")}>
-            <i>🌻</i>
-            <b>Grow my garden</b>
-            <small>Water something lovely</small>
-          </button>
-          <button className="story-choice" onClick={() => setStory(true)}>
-            <i>📚</i>
-            <b>Read a story</b>
-            <small>A new tale is waiting</small>
-          </button>
-          <button className="art-choice" onClick={() => visit("studio")}>
-            <i>🎨</i>
-            <b>Make some art</b>
-            <small>Colors, shapes & imagination</small>
-          </button>
-        </div>
-
-        <aside className="today-card">
-          <header>
-            <span>IN YOUR WORLD TODAY</span>
-            <i>no rush, ever</i>
-          </header>
-          <button
-            onClick={() => {
-              setPetHappy(true);
-              setSelected("home");
-            }}
-          >
-            <span className="activity-icon peach">🐶</span>
-            <span>
-              <b>{petHappy ? "Pip feels loved" : "Pip would love a cuddle"}</b>
-              <small>
-                {petHappy
-                  ? "You made his tail wag"
-                  : "He’s resting by the garden gate"}
-              </small>
-            </span>
-            <em>{petHappy ? "♥" : "→"}</em>
-          </button>
-          <button
-            onClick={() => {
-              setWatered(true);
-              setSelected("garden");
-            }}
-          >
-            <span className="activity-icon green">🌱</span>
-            <span>
-              <b>
-                {watered
-                  ? "The garden is sparkling"
-                  : "The daisies look thirsty"}
-              </b>
-              <small>
-                {watered
-                  ? "Tiny new petals are opening"
-                  : "Water them whenever you like"}
-              </small>
-            </span>
-            <em>{watered ? "✓" : "→"}</em>
-          </button>
-          <button onClick={() => setStory(true)}>
-            <span className="activity-icon purple">📖</span>
-            <span>
-              <b>Tonight’s bedtime story</b>
-              <small>The Moon Who Lost Her Glow</small>
-            </span>
-            <em>→</em>
-          </button>
-        </aside>
-
-        <div className="now-playing">
-          <span className={`place-icon ${place.tone}`}>{place.icon}</span>
-          <div>
-            <small>YOU’RE VISITING</small>
-            <b>{place.name}</b>
+            <span>{overallProgress}/3</span> adventures started
           </div>
-          <button onClick={() => visit(place.id)}>
-            Open <span>→</span>
-          </button>
-        </div>
-      </section>
-
-      <section className="family-strip">
-        <div>
-          <span className="eyebrow">TOGETHER IN YOUR WORLD</span>
-          <h2>Someone special is nearby</h2>
-          <p>Family can visit the village without interrupting Mila’s play.</p>
-        </div>
-        <div className="visitors">
-          <div className="visitor">
-            <span className="avatar dad">D</span>
-            <span>
-              <b>Dad</b>
-              <small>At the Story Nook</small>
+          <div className="village-world" aria-label="Interactive home village">
+            <div className="sky-stars" aria-hidden="true">
+              ✦　·　✧　·　✦　·　✧
+            </div>
+            <i className="cloud moving-cloud cloud-a" />
+            <i className="cloud moving-cloud cloud-b" />
+            <span className="bird bird-a" aria-hidden="true">
+              ⌁⌁
             </span>
-            <button onClick={() => setStory(true)}>Join</button>
-          </div>
-          <div className="visitor">
-            <span className="avatar nani">N</span>
-            <span>
-              <b>Nani</b>
-              <small>Left you a flower</small>
+            <span className="bird bird-b" aria-hidden="true">
+              ⌁
             </span>
-            <button onClick={() => setWatered(true)}>See</button>
-          </div>
-          <button className="invite" onClick={() => setFamilyInvite(true)}>
-            ＋ Invite family
-          </button>
-        </div>
-      </section>
-
-      <footer>
-        <div className="promise">
-          <span>♥</span>
-          <p>
-            <b>A world that moves at your child’s pace.</b>
-            <small>No ads · No timers · No streaks · No pressure to win</small>
-          </p>
-        </div>
-        <span>Private by design　·　Works offline　·　Made with care</span>
-      </footer>
-
-      {surprise && (
-        <div
-          className="modal-layer"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="surprise-title"
-        >
-          <section className="surprise-card">
             <button
-              className="close"
-              onClick={() => setSurprise(false)}
-              aria-label="Close surprise"
+              className={`village-sun ${activeObject === "sun" ? "object-pop" : ""}`}
+              aria-label="Touch the sun"
+              onClick={() => {
+                setIsNight((value) => !value);
+                setActiveObject("sun");
+              }}
             >
-              ×
+              {isNight ? "🌙" : "☀️"}
             </button>
-            <div className="gift-glow">
-              <span>🎁</span>
+            <div className="mountains" aria-hidden="true">
+              <i />
+              <i />
+              <i />
             </div>
-            <small>A LITTLE SURPRISE FROM PIP</small>
-            <h2 id="surprise-title">A pocketful of sunshine</h2>
-            <p>
-              Pip found a tiny golden button near the garden. He thought it
-              belonged in your keepsake box.
-            </p>
-            <div className="keepsake">
-              ☀️{" "}
-              <span>
-                <b>Golden sunshine button</b>
-                <small>A small thing to remember a happy day</small>
+            <div className="trees" aria-hidden="true">
+              <i>♣</i>
+              <i>♣</i>
+              <i>♣</i>
+              <i>♣</i>
+              <i>♣</i>
+            </div>
+
+            <button
+              className={`world-place house-place ${activeObject === "house" ? "object-pop" : ""}`}
+              onClick={() => {
+                setActiveObject("house");
+                setScreen("room");
+              }}
+            >
+              <span className="place-art">🏡</span>
+              <b>My Cozy Room</b>
+              <small>
+                {roomCount
+                  ? `${roomCount} things placed`
+                  : "Make it feel like you"}
+              </small>
+            </button>
+            <button
+              className={`world-place garden-place ${activeObject === "garden" ? "object-pop" : ""}`}
+              onClick={() => {
+                setActiveObject("garden");
+                setScreen("garden");
+              }}
+            >
+              <span className="place-art">🌻</span>
+              <b>Sunny Garden</b>
+              <small>
+                {gardenCount
+                  ? `${gardenCount} plants growing`
+                  : "Plant your first seed"}
+              </small>
+            </button>
+            <button
+              className={`world-place pet-place ${activeObject === "pet" ? "object-pop" : ""}`}
+              onClick={() => {
+                setActiveObject("pet");
+                setScreen("pet");
+              }}
+            >
+              <span className="place-art">
+                {world.pet ? petInfo[world.pet.kind].emoji : "🐾"}
               </span>
-            </div>
-            <button className="primary" onClick={() => setSurprise(false)}>
-              Keep it safe <span>♥</span>
+              <b>{world.pet ? `${world.pet.name}’s Cottage` : "Pet Cottage"}</b>
+              <small>
+                {world.pet ? "Your friend is waiting" : "Meet a new friend"}
+              </small>
             </button>
-          </section>
-        </div>
+            <button
+              className={`tiny-object pond ${activeObject === "pond" ? "object-pop" : ""}`}
+              onClick={() => setActiveObject("pond")}
+            >
+              <span>🦆</span>
+              <small>Quack!</small>
+            </button>
+            <button
+              className={`tiny-object mailbox ${activeObject === "mail" ? "object-pop" : ""}`}
+              onClick={() => setActiveObject("mail")}
+            >
+              <span>📬</span>
+              <small>A hello from Nani!</small>
+            </button>
+          </div>
+          <div className="gentle-note">
+            <span>💛</span>
+            <p>
+              <b>Your world waits for you.</b>No timers, no losing, and no need
+              to hurry.
+            </p>
+          </div>
+        </section>
       )}
 
-      {story && (
-        <div
-          className="modal-layer story-layer"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="story-title"
+      {screen === "room" && (
+        <section
+          className="activity-screen room-screen"
+          aria-labelledby="room-title"
         >
-          <section className="story-card interactive-story">
-            <button
-              className="close"
-              onClick={() => setStory(false)}
-              aria-label="Close story"
-            >
-              ×
-            </button>
-            <span className="moon-art">
-              {["☾", "🌲", "🏡", "✨"][storyPage]}
-              <i>✦</i>
-            </span>
-            <small>TONIGHT’S STORY · PAGE {storyPage + 1} OF 4</small>
-            <h2 id="story-title">The Moon Who Lost Her Glow</h2>
-            <p>
-              {
-                [
-                  "One quiet evening, the moon looked into the silver lake and noticed something strange. Her warm glow had disappeared.",
-                  "She searched behind the whispering pines, where an owl offered one silver feather and a very good question: ‘When did you last rest?’",
-                  "Down in the village, every family placed a tiny lantern in their window—not to hurry the moon, but to remind her she was loved in the dark, too.",
-                  "The moon took one long, peaceful breath. Slowly, softly, her glow returned—brighter because the whole little world had shared its light.",
-                ][storyPage]
-              }
-            </p>
-            <div className="story-nav">
-              <button
-                disabled={storyPage === 0}
-                onClick={() => setStoryPage((page) => Math.max(0, page - 1))}
-              >
-                ← Back
+          <div className="activity-heading">
+            <div>
+              <p className="kicker">MY COZY SPACE</p>
+              <h1 id="room-title">Decorate your room</h1>
+              <p>
+                Drag something into the room, or choose it and tap a glowing
+                space.
+              </p>
+            </div>
+            <div className="activity-actions">
+              <button onClick={undoRoom} disabled={!roomHistory.length}>
+                ↶ Undo
               </button>
+              <button onClick={redoRoom} disabled={!roomFuture.length}>
+                ↷ Redo
+              </button>
+              <button onClick={() => rememberRoom({})} disabled={!roomCount}>
+                Reset room
+              </button>
+            </div>
+          </div>
+          <div className="room-workspace">
+            <aside className="furniture-tray">
               <div>
-                {[0, 1, 2, 3].map((page) => (
-                  <i
-                    key={page}
-                    className={page === storyPage ? "active" : ""}
-                  />
+                <h2>Toy box</h2>
+                <span>{furniture.length} things</span>
+              </div>
+              <p>Choose one to place</p>
+              <div className="furniture-grid">
+                {furniture.map((item) => (
+                  <button
+                    key={item.id}
+                    draggable
+                    onDragStart={(event) =>
+                      event.dataTransfer.setData("text/plain", item.id)
+                    }
+                    onClick={() => setSelectedFurniture(item.id)}
+                    className={`${item.color} ${selectedFurniture === item.id ? "selected" : ""}`}
+                    aria-pressed={selectedFurniture === item.id}
+                    title={item.name}
+                  >
+                    <span>{item.emoji}</span>
+                    <small>{item.name}</small>
+                  </button>
                 ))}
               </div>
-              {storyPage < 3 ? (
-                <button onClick={() => setStoryPage((page) => page + 1)}>
-                  Turn page →
-                </button>
-              ) : (
+            </aside>
+            <div className="bedroom">
+              <div className="room-window">
+                <span>☁️</span>
+                <i />
+              </div>
+              <div className="room-message" role="status">
+                {roomMessage}
+              </div>
+              {roomSlots.map((slot) => {
+                const placed = furniture.find(
+                  (item) => item.id === world.room[slot],
+                );
+                return (
+                  <button
+                    key={slot}
+                    className={`room-slot ${slot} ${placed ? "filled" : ""}`}
+                    onDragOver={(event) => event.preventDefault()}
+                    onDrop={(event) => dropFurniture(event, slot)}
+                    onClick={() => placeFurniture(slot)}
+                    aria-label={
+                      placed
+                        ? `${placed.name}, move selected item here`
+                        : `Place selected item in ${slot.replaceAll("-", " ")}`
+                    }
+                  >
+                    {placed ? (
+                      <>
+                        <span>{placed.emoji}</span>
+                        <small>{placed.name}</small>
+                      </>
+                    ) : (
+                      <span>＋</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {screen === "garden" && (
+        <section
+          className="activity-screen garden-screen"
+          aria-labelledby="garden-title"
+        >
+          <div className="activity-heading">
+            <div>
+              <p className="kicker">SUNNY GARDEN</p>
+              <h1 id="garden-title">Grow something wonderful</h1>
+              <p>Plant, water, watch it grow, then gather two golden stars.</p>
+            </div>
+            <div className="seed-picker" aria-label="Choose a seed">
+              {(Object.keys(plantInfo) as PlantKind[]).map((kind) => (
                 <button
-                  onClick={() => {
-                    setStory(false);
-                    setStoryPage(0);
-                  }}
+                  key={kind}
+                  className={seed === kind ? "selected" : ""}
+                  onClick={() => setSeed(kind)}
+                  aria-pressed={seed === kind}
                 >
-                  The end ♥
+                  {plantInfo[kind].emoji[3]} {plantInfo[kind].name}
                 </button>
-              )}
+              ))}
             </div>
-          </section>
-        </div>
-      )}
-
-      {activity && (
-        <div
-          className="modal-layer activity-layer"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="activity-title"
-        >
-          <section className={`activity-card activity-${activity}`}>
-            <button
-              className="close"
-              onClick={() => setActivity(null)}
-              aria-label="Close activity"
-            >
-              ×
-            </button>
-            {activity === "home" && (
-              <div className="room-playground">
-                <div className="room-window">☀️</div>
-                <div className="room-bed">▰</div>
-                {roomItems.includes("teddy") && (
-                  <span className="decor teddy">🧸</span>
-                )}
-                {roomItems.includes("stars") && (
-                  <span className="decor star-lights">⭐　⭐　⭐</span>
-                )}
-                {roomItems.includes("plant") && (
-                  <span className="decor tiny-plant">🪴</span>
-                )}
-              </div>
-            )}
-            {activity === "garden" && (
-              <div className={`garden-playground stage-${gardenStage}`}>
-                <span className="garden-sun">☀️</span>
-                <div className="garden-plants">
-                  {["🌱", "🌿", "🌷", "🌻"][gardenStage]}　
-                  {["🌱", "🌿", "🌸", "🌼"][gardenStage]}　
-                  {["🌱", "☘️", "🌷", "🌺"][gardenStage]}
-                </div>
-                {gardenStage > 0 && (
-                  <span className="water-sparkles">💧　💧　💧</span>
-                )}
-              </div>
-            )}
-            {activity === "studio" && (
-              <div
-                className="paint-playground"
-                aria-label="Paint a picture by selecting a color and touching squares"
-              >
-                <div className="paint-grid">
-                  {pixels.map((color, index) => (
-                    <button
-                      key={index}
-                      aria-label={`Paint square ${index + 1}`}
-                      style={{ background: color }}
-                      onClick={() => paint(index)}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-            {activity === "pet" && (
-              <div className="pet-playground">
-                <span className={petHappy ? "pet-bounce" : ""}>🐶</span>
-                <i>
-                  {petAction.includes("ball")
-                    ? "⚽"
-                    : petAction.includes("snack")
-                      ? "🥕"
-                      : petHappy
-                        ? "♥"
-                        : ""}
-                </i>
-                <b>{petAction}</b>
-              </div>
-            )}
-            <small>YOUR LITTLE MOMENT</small>
-            <h2 id="activity-title">
-              {activity === "home"
-                ? "Make your home feel cozy"
-                : activity === "garden"
-                  ? "Help something grow"
-                  : activity === "studio"
-                    ? "What will you imagine?"
-                    : "Pip is happy to see you!"}
-            </h2>
-            <p>
-              {activity === "home"
-                ? "Choose one sweet thing for Mila’s room. You can change it whenever you like."
-                : activity === "garden"
-                  ? "The flowers don’t mind waiting. Give them a little water when you’re ready."
-                  : activity === "studio"
-                    ? "There are no mistakes here—only new ideas waiting to happen."
-                    : "Pip has nowhere else to be. Stay, play, or give him a gentle cuddle."}
-            </p>
-            <div className="activity-actions">
-              {activity === "home" && (
-                <>
-                  <button
-                    className={roomItems.includes("teddy") ? "chosen" : ""}
-                    onClick={() => toggleRoomItem("teddy")}
-                  >
-                    <i>🧸</i>
-                    <b>Teddy corner</b>
-                  </button>
-                  <button
-                    className={roomItems.includes("stars") ? "chosen" : ""}
-                    onClick={() => toggleRoomItem("stars")}
-                  >
-                    <i>⭐</i>
-                    <b>Star lights</b>
-                  </button>
-                  <button
-                    className={roomItems.includes("plant") ? "chosen" : ""}
-                    onClick={() => toggleRoomItem("plant")}
-                  >
-                    <i>🪴</i>
-                    <b>Tiny plant</b>
-                  </button>
-                </>
-              )}
-              {activity === "garden" && (
-                <>
-                  <button
-                    onClick={() => {
-                      setGardenStage((stage) => Math.min(3, stage + 1));
-                      setWatered(true);
-                    }}
-                  >
-                    <i>💧</i>
-                    <b>Water gently</b>
-                  </button>
-                  <button onClick={() => setGardenStage(0)}>
-                    <i>🌱</i>
-                    <b>Plant a seed</b>
-                  </button>
-                  <button onClick={() => setGardenStage(3)}>
-                    <i>🦋</i>
-                    <b>Watch butterflies</b>
-                  </button>
-                </>
-              )}
-              {activity === "studio" && (
-                <>
-                  {["#ef9276", "#f4c867", "#78a878", "#70a9b3", "#9284b5"].map(
-                    (color) => (
-                      <button
-                        key={color}
-                        className={`color-choice ${paintColor === color ? "chosen" : ""}`}
-                        onClick={() => setPaintColor(color)}
-                        aria-label={`Choose ${color}`}
-                      >
-                        <i style={{ background: color }} />
-                        <b>
-                          {color === "#ef9276"
-                            ? "Coral"
-                            : color === "#f4c867"
-                              ? "Sunshine"
-                              : color === "#78a878"
-                                ? "Leaf"
-                                : color === "#70a9b3"
-                                  ? "Sky"
-                                  : "Berry"}
-                        </b>
-                      </button>
-                    ),
+          </div>
+          <div className="garden-scene">
+            <div className="garden-sun">☀️</div>
+            <i className="garden-cloud cloud" />
+            <div className="garden-birds">⌁　⌁</div>
+            <div className="garden-plots">
+              {world.garden.map((plantItem, index) => (
+                <article
+                  className={`garden-plot ${plantItem?.watered ? "sparkle" : ""}`}
+                  key={index}
+                >
+                  <div className="plant-visual">
+                    {plantItem
+                      ? plantInfo[plantItem.kind].emoji[plantItem.stage]
+                      : "·"}
+                  </div>
+                  {!plantItem ? (
+                    <button onClick={() => plant(index)}>
+                      Plant {plantInfo[seed].name}
+                    </button>
+                  ) : plantItem.stage < 3 ? (
+                    <button onClick={() => waterPlant(index)}>
+                      💧 Water · stage {plantItem.stage + 1}/3
+                    </button>
+                  ) : (
+                    <button className="harvest" onClick={() => harvest(index)}>
+                      ✨ Gather +2 stars
+                    </button>
                   )}
-                  <button onClick={() => setPixels(Array(48).fill("#fffaf0"))}>
-                    <i>↻</i>
-                    <b>New page</b>
-                  </button>
-                </>
-              )}
-              {activity === "pet" && (
-                <>
-                  <button
-                    onClick={() => {
-                      setPetHappy(true);
-                      setPetAction("Pip snuggles close. Cozy!");
-                    }}
-                  >
-                    <i>🤗</i>
-                    <b>Gentle cuddle</b>
-                  </button>
-                  <button
-                    onClick={() => {
-                      setPetHappy(true);
-                      setPetAction("Crunch! Pip loved his snack.");
-                    }}
-                  >
-                    <i>🥕</i>
-                    <b>Give a snack</b>
-                  </button>
-                  <button
-                    onClick={() => {
-                      setPetHappy(true);
-                      setPetAction("Pip chased the ball back to you!");
-                    }}
-                  >
-                    <i>⚽</i>
-                    <b>Roll the ball</b>
-                  </button>
-                </>
-              )}
+                  <small>
+                    {plantItem
+                      ? `${plantInfo[plantItem.kind].name} · ${plantItem.stage === 3 ? "Blooming!" : plantItem.watered ? "Happy and growing" : "Ready for water"}`
+                      : "An empty patch of soft soil"}
+                  </small>
+                </article>
+              ))}
             </div>
-            <button className="maybe-later" onClick={() => setActivity(null)}>
-              Maybe later—that’s okay
-            </button>
-          </section>
-        </div>
+          </div>
+        </section>
       )}
 
-      {parentPanel && (
-        <div
-          className="modal-layer"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="parent-title"
+      {screen === "pet" && (
+        <section
+          className="activity-screen pet-screen"
+          aria-labelledby="pet-title"
         >
-          <section className="parent-card">
-            <button
-              className="close"
-              onClick={() => setParentPanel(false)}
-              aria-label="Close grown-up settings"
-            >
-              ×
-            </button>
-            <span className="eyebrow">GROWN-UP SPACE</span>
-            <h2 id="parent-title">Mila’s world, thoughtfully protected</h2>
-            <p>
-              Family controls stay separate from play. Progress is private and
-              stored on this device in the showcase.
-            </p>
-            <label>
-              <span>Reduce animation</span>
-              <input
-                type="checkbox"
-                checked={reduceMotion}
-                onChange={(event) => setReduceMotion(event.target.checked)}
-              />
-            </label>
-            <label>
-              <span>Read text aloud</span>
-              <input
-                type="checkbox"
-                checked={readAloud}
-                onChange={(event) => setReadAloud(event.target.checked)}
-              />
-            </label>
-            <label>
-              <span>High contrast</span>
-              <input
-                type="checkbox"
-                checked={highContrast}
-                onChange={(event) => setHighContrast(event.target.checked)}
-              />
-            </label>
-            <p className="preference-status" aria-live="polite">
-              {readAloud ? "Read aloud is on." : "Read aloud is off."}
-            </p>
-            <button className="primary" onClick={savePreferences}>
-              Save preferences
-            </button>
-          </section>
-        </div>
-      )}
-
-      {familyInvite && (
-        <div
-          className="modal-layer"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="invite-title"
-        >
-          <section className="parent-card">
-            <button
-              className="close"
-              onClick={() => setFamilyInvite(false)}
-              aria-label="Close family invitation"
-            >
-              ×
-            </button>
-            <span className="eyebrow">FAMILY VISITS</span>
-            <h2 id="invite-title">Invite someone Mila loves</h2>
-            <p>
-              In the full family app, a grown-up would create a private invite
-              here. This showcase never sends or collects personal information.
-            </p>
-            <button className="primary" onClick={() => setFamilyInvite(false)}>
-              Got it — keep playing
-            </button>
-          </section>
-        </div>
+          {!world.pet ? (
+            <div className="adoption-card">
+              <p className="kicker">A NEW BEST FRIEND</p>
+              <h1 id="pet-title">Who would you like to care for?</h1>
+              <p>Every friend is gentle, playful, and happy to meet you.</p>
+              <div className="pet-choices">
+                {(Object.keys(petInfo) as PetKind[]).map((kind) => (
+                  <button
+                    key={kind}
+                    onClick={() =>
+                      setWorld((current) => ({
+                        ...current,
+                        pet: {
+                          kind,
+                          name: petInfo[kind].label,
+                          hunger: 70,
+                          happiness: 70,
+                          energy: 70,
+                          cleanliness: 70,
+                        },
+                      }))
+                    }
+                  >
+                    <span>{petInfo[kind].emoji}</span>
+                    <b>{petInfo[kind].label}</b>
+                    <small>Adopt me</small>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="activity-heading">
+                <div>
+                  <p className="kicker">PET COTTAGE</p>
+                  <h1 id="pet-title">Care for {world.pet.name}</h1>
+                  <p>
+                    Small acts of care make your friend glow with happiness.
+                  </p>
+                </div>
+              </div>
+              <div className="pet-cottage">
+                <div className="pet-room">
+                  <div className="pet-window">☀️　☁️</div>
+                  <div className="pet-bed">🧺</div>
+                  <div className="pet-bowl">🥣</div>
+                  <div className="pet-character" key={petReaction}>
+                    <span>{petInfo[world.pet.kind].emoji}</span>
+                    <i>♥</i>
+                  </div>
+                  <p role="status">{petReaction}</p>
+                </div>
+                <aside className="care-panel">
+                  <h2>How is {world.pet.name} feeling?</h2>
+                  {(
+                    [
+                      ["Full tummy", world.pet.hunger, "🥕"],
+                      ["Happiness", world.pet.happiness, "💛"],
+                      ["Energy", world.pet.energy, "⚡"],
+                      ["Clean & fluffy", world.pet.cleanliness, "🫧"],
+                    ] as Array<[string, number, string]>
+                  ).map(([label, value, icon]) => (
+                    <div className="pet-meter" key={label}>
+                      <span>{icon}</span>
+                      <div>
+                        <b>{label}</b>
+                        <i>
+                          <em style={{ width: `${value}%` }} />
+                        </i>
+                      </div>
+                      <strong>{value}</strong>
+                    </div>
+                  ))}
+                  <div className="care-actions">
+                    <button onClick={() => careForPet("feed")}>
+                      🥕<b>Feed</b>
+                    </button>
+                    <button onClick={() => careForPet("play")}>
+                      ⚽<b>Play</b>
+                    </button>
+                    <button onClick={() => careForPet("sleep")}>
+                      🌙<b>Sleep</b>
+                    </button>
+                    <button onClick={() => careForPet("bathe")}>
+                      🫧<b>Bathe</b>
+                    </button>
+                  </div>
+                </aside>
+              </div>
+            </>
+          )}
+        </section>
       )}
     </main>
   );
