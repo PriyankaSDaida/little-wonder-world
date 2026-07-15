@@ -1096,6 +1096,31 @@ footer {
   }
 }
 
+.world.reduce-motion *,
+.world.reduce-motion *::before,
+.world.reduce-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
+.world.high-contrast {
+  filter: contrast(1.22) saturate(1.08);
+}
+
+.world.high-contrast button:focus-visible,
+.world.high-contrast select:focus-visible,
+.world.high-contrast input:focus-visible {
+  outline: 4px solid #102d25;
+  outline-offset: 3px;
+}
+
+.preference-status {
+  margin: 4px 0 0;
+  color: #49655b;
+  font-weight: 700;
+}
+
 /* Child-first interaction layer */
 .topbar {
   height: 82px;

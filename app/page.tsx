@@ -64,6 +64,10 @@ export default function Home() {
   const [roomItems, setRoomItems] = useState<string[]>([]);
   const [paintColor, setPaintColor] = useState("#ef9276");
   const [pixels, setPixels] = useState(() => Array(48).fill("#fffaf0"));
+  const [reduceMotion, setReduceMotion] = useState(false);
+  const [readAloud, setReadAloud] = useState(false);
+  const [highContrast, setHighContrast] = useState(false);
+  const [familyInvite, setFamilyInvite] = useState(false);
   const place = places.find((item) => item.id === selected) ?? places[0];
 
   useEffect(() => {
@@ -74,10 +78,16 @@ export default function Home() {
         season?: keyof typeof seasons;
         watered?: boolean;
         petHappy?: boolean;
+        reduceMotion?: boolean;
+        readAloud?: boolean;
+        highContrast?: boolean;
       };
       if (data.season) setSeason(data.season);
       setWatered(Boolean(data.watered));
       setPetHappy(Boolean(data.petHappy));
+      setReduceMotion(Boolean(data.reduceMotion));
+      setReadAloud(Boolean(data.readAloud));
+      setHighContrast(Boolean(data.highContrast));
     }, 0);
     if ("serviceWorker" in navigator)
       navigator.serviceWorker.register("/sw.js").catch(() => undefined);
@@ -87,9 +97,28 @@ export default function Home() {
   useEffect(() => {
     window.localStorage.setItem(
       "little-wonder-world",
-      JSON.stringify({ season, watered, petHappy }),
+      JSON.stringify({
+        season,
+        watered,
+        petHappy,
+        reduceMotion,
+        readAloud,
+        highContrast,
+      }),
     );
-  }, [season, watered, petHappy]);
+  }, [season, watered, petHappy, reduceMotion, readAloud, highContrast]);
+
+  function savePreferences() {
+    if (readAloud && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+      const message = new SpeechSynthesisUtterance(
+        "Read aloud is on. Welcome to Mila's gentle world.",
+      );
+      message.rate = 0.85;
+      window.speechSynthesis.speak(message);
+    }
+    setParentPanel(false);
+  }
 
   function visit(id: string) {
     setSelected(id);
@@ -112,7 +141,9 @@ export default function Home() {
   }
 
   return (
-    <main className={`world ${season} ${weather}`}>
+    <main
+      className={`world ${season} ${weather}${reduceMotion ? " reduce-motion" : ""}${highContrast ? " high-contrast" : ""}`}
+    >
       <header className="topbar">
         <a href="#village" className="brand">
           <span>✦</span>
@@ -122,9 +153,25 @@ export default function Home() {
           </span>
         </a>
         <nav aria-label="Main navigation">
-          <button className="active">My Village</button>
+          <button
+            className="active"
+            onClick={() => {
+              setActivity(null);
+              setStory(false);
+              document.getElementById("village")?.scrollIntoView();
+            }}
+          >
+            My Village
+          </button>
           <button onClick={() => setStory(true)}>Storybook</button>
-          <button onClick={() => setSelected("studio")}>Create</button>
+          <button
+            onClick={() => {
+              setSelected("studio");
+              setActivity("studio");
+            }}
+          >
+            Create
+          </button>
         </nav>
         <div className="family">
           <div className="avatar mila">M</div>
@@ -382,7 +429,9 @@ export default function Home() {
             </span>
             <button onClick={() => setWatered(true)}>See</button>
           </div>
-          <button className="invite">＋ Invite family</button>
+          <button className="invite" onClick={() => setFamilyInvite(true)}>
+            ＋ Invite family
+          </button>
         </div>
       </section>
 
@@ -734,18 +783,61 @@ export default function Home() {
             </p>
             <label>
               <span>Reduce animation</span>
-              <input type="checkbox" />
+              <input
+                type="checkbox"
+                checked={reduceMotion}
+                onChange={(event) => setReduceMotion(event.target.checked)}
+              />
             </label>
             <label>
               <span>Read text aloud</span>
-              <input type="checkbox" />
+              <input
+                type="checkbox"
+                checked={readAloud}
+                onChange={(event) => setReadAloud(event.target.checked)}
+              />
             </label>
             <label>
               <span>High contrast</span>
-              <input type="checkbox" />
+              <input
+                type="checkbox"
+                checked={highContrast}
+                onChange={(event) => setHighContrast(event.target.checked)}
+              />
             </label>
-            <button className="primary" onClick={() => setParentPanel(false)}>
+            <p className="preference-status" aria-live="polite">
+              {readAloud ? "Read aloud is on." : "Read aloud is off."}
+            </p>
+            <button className="primary" onClick={savePreferences}>
               Save preferences
+            </button>
+          </section>
+        </div>
+      )}
+
+      {familyInvite && (
+        <div
+          className="modal-layer"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="invite-title"
+        >
+          <section className="parent-card">
+            <button
+              className="close"
+              onClick={() => setFamilyInvite(false)}
+              aria-label="Close family invitation"
+            >
+              ×
+            </button>
+            <span className="eyebrow">FAMILY VISITS</span>
+            <h2 id="invite-title">Invite someone Mila loves</h2>
+            <p>
+              In the full family app, a grown-up would create a private invite
+              here. This showcase never sends or collects personal information.
+            </p>
+            <button className="primary" onClick={() => setFamilyInvite(false)}>
+              Got it — keep playing
             </button>
           </section>
         </div>
