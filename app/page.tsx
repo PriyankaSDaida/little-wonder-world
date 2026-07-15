@@ -58,6 +58,12 @@ export default function Home() {
   const [story, setStory] = useState(false);
   const [parentPanel, setParentPanel] = useState(false);
   const [activity, setActivity] = useState<string | null>(null);
+  const [storyPage, setStoryPage] = useState(0);
+  const [gardenStage, setGardenStage] = useState(0);
+  const [petAction, setPetAction] = useState("Pip is waiting for you!");
+  const [roomItems, setRoomItems] = useState<string[]>([]);
+  const [paintColor, setPaintColor] = useState("#ef9276");
+  const [pixels, setPixels] = useState(() => Array(48).fill("#fffaf0"));
   const place = places.find((item) => item.id === selected) ?? places[0];
 
   useEffect(() => {
@@ -89,6 +95,20 @@ export default function Home() {
     setSelected(id);
     if (id === "stories") setStory(true);
     else setActivity(id);
+  }
+
+  function toggleRoomItem(item: string) {
+    setRoomItems((items) =>
+      items.includes(item)
+        ? items.filter((value) => value !== item)
+        : [...items, item],
+    );
+  }
+
+  function paint(index: number) {
+    setPixels((current) =>
+      current.map((color, pixel) => (pixel === index ? paintColor : color)),
+    );
   }
 
   return (
@@ -422,7 +442,7 @@ export default function Home() {
           aria-modal="true"
           aria-labelledby="story-title"
         >
-          <section className="story-card">
+          <section className="story-card interactive-story">
             <button
               className="close"
               onClick={() => setStory(false)}
@@ -431,18 +451,51 @@ export default function Home() {
               ×
             </button>
             <span className="moon-art">
-              ☾<i>✦</i>
+              {["☾", "🌲", "🏡", "✨"][storyPage]}
+              <i>✦</i>
             </span>
-            <small>TONIGHT’S STORY · 6 MIN READ</small>
+            <small>TONIGHT’S STORY · PAGE {storyPage + 1} OF 4</small>
             <h2 id="story-title">The Moon Who Lost Her Glow</h2>
             <p>
-              One quiet evening, the moon looked into the silver lake and
-              noticed something strange. Her light was gone—but the little
-              village below knew exactly where to look…
+              {
+                [
+                  "One quiet evening, the moon looked into the silver lake and noticed something strange. Her warm glow had disappeared.",
+                  "She searched behind the whispering pines, where an owl offered one silver feather and a very good question: ‘When did you last rest?’",
+                  "Down in the village, every family placed a tiny lantern in their window—not to hurry the moon, but to remind her she was loved in the dark, too.",
+                  "The moon took one long, peaceful breath. Slowly, softly, her glow returned—brighter because the whole little world had shared its light.",
+                ][storyPage]
+              }
             </p>
-            <button className="primary" onClick={() => setStory(false)}>
-              Read together <span>→</span>
-            </button>
+            <div className="story-nav">
+              <button
+                disabled={storyPage === 0}
+                onClick={() => setStoryPage((page) => Math.max(0, page - 1))}
+              >
+                ← Back
+              </button>
+              <div>
+                {[0, 1, 2, 3].map((page) => (
+                  <i
+                    key={page}
+                    className={page === storyPage ? "active" : ""}
+                  />
+                ))}
+              </div>
+              {storyPage < 3 ? (
+                <button onClick={() => setStoryPage((page) => page + 1)}>
+                  Turn page →
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    setStory(false);
+                    setStoryPage(0);
+                  }}
+                >
+                  The end ♥
+                </button>
+              )}
+            </div>
           </section>
         </div>
       )}
@@ -454,7 +507,7 @@ export default function Home() {
           aria-modal="true"
           aria-labelledby="activity-title"
         >
-          <section className={`activity-card ${activity}`}>
+          <section className={`activity-card activity-${activity}`}>
             <button
               className="close"
               onClick={() => setActivity(null)}
@@ -462,15 +515,66 @@ export default function Home() {
             >
               ×
             </button>
-            <div className="activity-hero">
-              {activity === "home"
-                ? "🏡"
-                : activity === "garden"
-                  ? "🌻"
-                  : activity === "studio"
-                    ? "🎨"
-                    : "🐶"}
-            </div>
+            {activity === "home" && (
+              <div className="room-playground">
+                <div className="room-window">☀️</div>
+                <div className="room-bed">▰</div>
+                {roomItems.includes("teddy") && (
+                  <span className="decor teddy">🧸</span>
+                )}
+                {roomItems.includes("stars") && (
+                  <span className="decor star-lights">⭐　⭐　⭐</span>
+                )}
+                {roomItems.includes("plant") && (
+                  <span className="decor tiny-plant">🪴</span>
+                )}
+              </div>
+            )}
+            {activity === "garden" && (
+              <div className={`garden-playground stage-${gardenStage}`}>
+                <span className="garden-sun">☀️</span>
+                <div className="garden-plants">
+                  {["🌱", "🌿", "🌷", "🌻"][gardenStage]}　
+                  {["🌱", "🌿", "🌸", "🌼"][gardenStage]}　
+                  {["🌱", "☘️", "🌷", "🌺"][gardenStage]}
+                </div>
+                {gardenStage > 0 && (
+                  <span className="water-sparkles">💧　💧　💧</span>
+                )}
+              </div>
+            )}
+            {activity === "studio" && (
+              <div
+                className="paint-playground"
+                aria-label="Paint a picture by selecting a color and touching squares"
+              >
+                <div className="paint-grid">
+                  {pixels.map((color, index) => (
+                    <button
+                      key={index}
+                      aria-label={`Paint square ${index + 1}`}
+                      style={{ background: color }}
+                      onClick={() => paint(index)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+            {activity === "pet" && (
+              <div className="pet-playground">
+                <span className={petHappy ? "pet-bounce" : ""}>🐶</span>
+                <i>
+                  {petAction.includes("ball")
+                    ? "⚽"
+                    : petAction.includes("snack")
+                      ? "🥕"
+                      : petHappy
+                        ? "♥"
+                        : ""}
+                </i>
+                <b>{petAction}</b>
+              </div>
+            )}
             <small>YOUR LITTLE MOMENT</small>
             <h2 id="activity-title">
               {activity === "home"
@@ -493,15 +597,24 @@ export default function Home() {
             <div className="activity-actions">
               {activity === "home" && (
                 <>
-                  <button onClick={() => setActivity(null)}>
+                  <button
+                    className={roomItems.includes("teddy") ? "chosen" : ""}
+                    onClick={() => toggleRoomItem("teddy")}
+                  >
                     <i>🧸</i>
                     <b>Teddy corner</b>
                   </button>
-                  <button onClick={() => setActivity(null)}>
+                  <button
+                    className={roomItems.includes("stars") ? "chosen" : ""}
+                    onClick={() => toggleRoomItem("stars")}
+                  >
                     <i>⭐</i>
                     <b>Star lights</b>
                   </button>
-                  <button onClick={() => setActivity(null)}>
+                  <button
+                    className={roomItems.includes("plant") ? "chosen" : ""}
+                    onClick={() => toggleRoomItem("plant")}
+                  >
                     <i>🪴</i>
                     <b>Tiny plant</b>
                   </button>
@@ -511,18 +624,18 @@ export default function Home() {
                 <>
                   <button
                     onClick={() => {
+                      setGardenStage((stage) => Math.min(3, stage + 1));
                       setWatered(true);
-                      setActivity(null);
                     }}
                   >
                     <i>💧</i>
                     <b>Water gently</b>
                   </button>
-                  <button onClick={() => setActivity(null)}>
+                  <button onClick={() => setGardenStage(0)}>
                     <i>🌱</i>
                     <b>Plant a seed</b>
                   </button>
-                  <button onClick={() => setActivity(null)}>
+                  <button onClick={() => setGardenStage(3)}>
                     <i>🦋</i>
                     <b>Watch butterflies</b>
                   </button>
@@ -530,17 +643,32 @@ export default function Home() {
               )}
               {activity === "studio" && (
                 <>
-                  <button onClick={() => setActivity(null)}>
-                    <i>🖌️</i>
-                    <b>Finger paint</b>
-                  </button>
-                  <button onClick={() => setActivity(null)}>
-                    <i>✂️</i>
-                    <b>Paper shapes</b>
-                  </button>
-                  <button onClick={() => setActivity(null)}>
-                    <i>🌈</i>
-                    <b>Mix colors</b>
+                  {["#ef9276", "#f4c867", "#78a878", "#70a9b3", "#9284b5"].map(
+                    (color) => (
+                      <button
+                        key={color}
+                        className={`color-choice ${paintColor === color ? "chosen" : ""}`}
+                        onClick={() => setPaintColor(color)}
+                        aria-label={`Choose ${color}`}
+                      >
+                        <i style={{ background: color }} />
+                        <b>
+                          {color === "#ef9276"
+                            ? "Coral"
+                            : color === "#f4c867"
+                              ? "Sunshine"
+                              : color === "#78a878"
+                                ? "Leaf"
+                                : color === "#70a9b3"
+                                  ? "Sky"
+                                  : "Berry"}
+                        </b>
+                      </button>
+                    ),
+                  )}
+                  <button onClick={() => setPixels(Array(48).fill("#fffaf0"))}>
+                    <i>↻</i>
+                    <b>New page</b>
                   </button>
                 </>
               )}
@@ -549,7 +677,7 @@ export default function Home() {
                   <button
                     onClick={() => {
                       setPetHappy(true);
-                      setActivity(null);
+                      setPetAction("Pip snuggles close. Cozy!");
                     }}
                   >
                     <i>🤗</i>
@@ -558,7 +686,7 @@ export default function Home() {
                   <button
                     onClick={() => {
                       setPetHappy(true);
-                      setActivity(null);
+                      setPetAction("Crunch! Pip loved his snack.");
                     }}
                   >
                     <i>🥕</i>
@@ -567,7 +695,7 @@ export default function Home() {
                   <button
                     onClick={() => {
                       setPetHappy(true);
-                      setActivity(null);
+                      setPetAction("Pip chased the ball back to you!");
                     }}
                   >
                     <i>⚽</i>
